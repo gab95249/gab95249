@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorpresa Digital - Diana</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Pantalla de Bienvenida -->
+        <div id="screen-welcome" class="screen active">
+            <div class="welcome-content">
+                <h1 class="name">Diana</h1>
+                <p class="subtitle">Tengo una sorpresa para ti</p>
+                <button class="heart-button" id="heart-button">
+                    <span class="heart">❤️</span>
+                </button>
+                <p class="instruction">Toca el corazón</p>
+            </div>
+            <div class="loading-bar-container">
+                <div class="loading-bar" id="loading-bar"></div>
+            </div>
+        </div>
+
+        <!-- Pantalla de Mensaje/Poema -->
+        <div id="screen-message" class="screen">
+            <button class="back-btn" onclick="previousScreen()">← Atrás</button>
+            <div class="message-content">
+                <div class="message-text" id="message-text"></div>
+                <button class="next-btn" onclick="nextScreen()">Continuar →</button>
+            </div>
+        </div>
+
+        <!-- Pantalla de Galería -->
+        <div id="screen-gallery" class="screen">
+            <button class="back-btn" onclick="previousScreen()">← Atrás</button>
+            <div class="gallery-container">
+                <div class="gallery-grid" id="gallery-grid"></div>
+                <button class="next-btn" onclick="nextScreen()">Continuar →</button>
+            </div>
+        </div>
+
+        <!-- Pantalla de Cierre -->
+        <div id="screen-closing" class="screen">
+            <button class="back-btn" onclick="previousScreen()">← Atrás</button>
+            <div class="closing-content">
+                <h2 id="closing-title">Gracias por compartir tu vida conmigo</h2>
+                <p id="closing-text">Este momento es especial para mí</p>
+                <button class="save-btn" onclick="saveMemory()">💾 Guardar el Momento</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating hearts animation -->
+    <div id="floating-hearts"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
