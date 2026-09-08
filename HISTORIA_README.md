@@ -1,4 +1,4 @@
-# Nuestra Historia - Sistema Compartido
+# Nuestro Espacio - Sistema Compartido
 
 Aplicación web para que tú y tu pareja compartan fotos y descripciones de momentos especiales.
 
