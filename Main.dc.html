@@ -10,109 +10,125 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; }
-    a { color: #667eea; text-decoration: none; }
-    a:hover { color: #764ba2; }
+    a { color: #d97706; text-decoration: none; }
+    a:hover { color: #b45309; }
+    .emoji-float { animation: float 3s ease-in-out infinite; }
+    @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
   </style>
 </helmet>
 
-<div style="width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 80px 40px; text-align: center; color: white;">
+<div style="width: 100%; background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #dc2626 100%); padding: 80px 40px; text-align: center; color: white; position: relative; overflow: hidden;">
+  <div style="position: absolute; top: 20px; left: 40px; font-size: 40px; opacity: 0.3; animation: float 4s ease-in-out infinite;">🌻</div>
+  <div style="position: absolute; bottom: 40px; right: 60px; font-size: 50px; opacity: 0.25; animation: float 3.5s ease-in-out infinite;">❤️</div>
+
   <h1 style="font-size: 56px; font-weight: 700; margin-bottom: 20px; letter-spacing: -1px;">Nuestro Espacio</h1>
-  <p style="font-size: 24px; opacity: 0.95; margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto;">Comparte momentos especiales con quien más te importa</p>
-  <button style="background: white; color: #667eea; border: none; padding: 16px 48px; font-size: 18px; font-weight: 600; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: all 0.3s ease;">
-    Comienza Ahora
+  <p style="font-size: 24px; opacity: 0.95; margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto;">Nuestros momentos, nuestras fotos, nuestros recuerdos 💕</p>
+  <button style="background: white; color: #d97706; border: none; padding: 16px 48px; font-size: 18px; font-weight: 600; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: all 0.3s ease; font-weight: bold;">
+    ❤️ Entrar
   </button>
 </div>
 
 <div style="max-width: 1200px; margin: 0 auto; padding: 80px 40px;">
-  <h2 style="font-size: 42px; text-align: center; margin-bottom: 60px; color: #333;">¿Cómo Funciona?</h2>
+  <div style="text-align: center; margin-bottom: 20px;">
+    <span style="font-size: 50px;">🌻</span>
+  </div>
+  <h2 style="font-size: 42px; text-align: center; margin-bottom: 60px; color: #92400e;">Lo Nuestro</h2>
 
   <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-bottom: 80px;">
     <div style="text-align: center;">
-      <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 20px; color: white;">👤</div>
-      <h3 style="font-size: 20px; margin-bottom: 15px; color: #333;">Crea tu Cuenta</h3>
-      <p style="color: #666; font-size: 16px;">Únete con tu pareja en segundos. Simple y seguro.</p>
+      <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 20px; box-shadow: 0 4px 15px rgba(217, 119, 6, 0.3);">👤</div>
+      <h3 style="font-size: 20px; margin-bottom: 15px; color: #92400e;">Yo y Tú</h3>
+      <p style="color: #b45309; font-size: 16px;">Nuestros nombres, nuestros perfiles. Solo nosotros dos.</p>
     </div>
 
     <div style="text-align: center;">
-      <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 20px; color: white;">📸</div>
-      <h3 style="font-size: 20px; margin-bottom: 15px; color: #333;">Comparte Fotos</h3>
-      <p style="color: #666; font-size: 16px;">Sube momentos especiales con descripciones personales.</p>
+      <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 20px; box-shadow: 0 4px 15px rgba(217, 119, 6, 0.3);">📸</div>
+      <h3 style="font-size: 20px; margin-bottom: 15px; color: #92400e;">Nuestras Fotos</h3>
+      <p style="color: #b45309; font-size: 16px;">Guardamos los momentos que queremos recordar siempre.</p>
     </div>
 
     <div style="text-align: center;">
-      <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 20px; color: white;">❤️</div>
-      <h3 style="font-size: 20px; margin-bottom: 15px; color: #333;">Recuerda Juntos</h3>
-      <p style="color: #666; font-size: 16px;">Accede a tu historia compartida en cualquier momento.</p>
+      <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 20px; box-shadow: 0 4px 15px rgba(217, 119, 6, 0.3);">❤️</div>
+      <h3 style="font-size: 20px; margin-bottom: 15px; color: #92400e;">Nuestra Historia</h3>
+      <p style="color: #b45309; font-size: 16px;">Todos nuestros recuerdos en un solo lugar, siempre.</p>
     </div>
   </div>
 </div>
 
-<div style="background: #f8f9ff; padding: 80px 40px;">
+<div style="background: linear-gradient(180deg, #fef3c7 0%, #fed7aa 100%); padding: 80px 40px; position: relative;">
+  <div style="position: absolute; top: 40px; right: 80px; font-size: 45px; opacity: 0.4; animation: float 4.5s ease-in-out infinite;">🌻</div>
   <div style="max-width: 1200px; margin: 0 auto;">
-    <h2 style="font-size: 42px; text-align: center; margin-bottom: 60px; color: #333;">Características</h2>
+    <h2 style="font-size: 42px; text-align: center; margin-bottom: 60px; color: #92400e;">Así Es Nuestro Espacio</h2>
 
     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px;">
-      <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-        <h3 style="color: #667eea; margin-bottom: 12px; font-size: 18px;">✨ Sincronización en Tiempo Real</h3>
-        <p style="color: #666; line-height: 1.6;">Lo que compartes aparece al instante en el dispositivo de tu pareja.</p>
+      <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(217, 119, 6, 0.15); border-left: 4px solid #f59e0b;">
+        <h3 style="color: #d97706; margin-bottom: 12px; font-size: 18px;">💫 Solo para Nosotros</h3>
+        <p style="color: #b45309; line-height: 1.6;">Un lugar privado donde no entra nadie más. Solo tú y yo.</p>
       </div>
 
-      <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-        <h3 style="color: #667eea; margin-bottom: 12px; font-size: 18px;">🔒 Privado y Seguro</h3>
-        <p style="color: #666; line-height: 1.6;">Solo ustedes dos tienen acceso a sus momentos especiales.</p>
+      <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(217, 119, 6, 0.15); border-left: 4px solid #f59e0b;">
+        <h3 style="color: #d97706; margin-bottom: 12px; font-size: 18px;">🎯 Siempre Accesible</h3>
+        <p style="color: #b45309; line-height: 1.6;">Desde el celular, la compu o cualquier dispositivo. Siempre a mano.</p>
       </div>
 
-      <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-        <h3 style="color: #667eea; margin-bottom: 12px; font-size: 18px;">📱 Acceso Desde Cualquier Lugar</h3>
-        <p style="color: #666; line-height: 1.6;">Funciona en computadora, tablet y celular sin instalaciones.</p>
+      <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(217, 119, 6, 0.15); border-left: 4px solid #f59e0b;">
+        <h3 style="color: #d97706; margin-bottom: 12px; font-size: 18px;">🌟 Nuestros Recuerdos</h3>
+        <p style="color: #b45309; line-height: 1.6;">Las fotos y historias que hacen especial lo nuestro guardadas juntas.</p>
       </div>
 
-      <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-        <h3 style="color: #667eea; margin-bottom: 12px; font-size: 18px;">🎨 Diseño Elegante</h3>
-        <p style="color: #666; line-height: 1.6;">Interfaz moderna y fácil de usar para compartir sin complicaciones.</p>
+      <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(217, 119, 6, 0.15); border-left: 4px solid #f59e0b;">
+        <h3 style="color: #d97706; margin-bottom: 12px; font-size: 18px;">💕 Cálido y Hermoso</h3>
+        <p style="color: #b45309; line-height: 1.6;">Diseñado para celebrar lo que nos hace felices. Juntos.</p>
       </div>
     </div>
   </div>
 </div>
 
 <div style="max-width: 1200px; margin: 0 auto; padding: 80px 40px;">
-  <h2 style="font-size: 42px; text-align: center; margin-bottom: 60px; color: #333;">Galería de Ejemplos</h2>
+  <div style="text-align: center; margin-bottom: 30px;">
+    <span style="font-size: 50px;">❤️</span>
+  </div>
+  <h2 style="font-size: 42px; text-align: center; margin-bottom: 60px; color: #92400e;">Nuestra Galería</h2>
 
   <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 40px;">
-    <div style="aspect-ratio: 1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; text-align: center; padding: 20px;">
-      <span>Momentos juntos</span>
+    <div style="aspect-ratio: 1; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; text-align: center; padding: 20px; box-shadow: 0 4px 15px rgba(217, 119, 6, 0.2);">
+      <span>🌻 Momentos juntos</span>
     </div>
-    <div style="aspect-ratio: 1; background: linear-gradient(135deg, #764ba2 0%, #f06292 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; text-align: center; padding: 20px;">
-      <span>Recuerdos especiales</span>
+    <div style="aspect-ratio: 1; background: linear-gradient(135deg, #fca5a5 0%, #dc2626 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; text-align: center; padding: 20px; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.2);">
+      <span>❤️ Recuerdos especiales</span>
     </div>
-    <div style="aspect-ratio: 1; background: linear-gradient(135deg, #f06292 0%, #667eea 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; text-align: center; padding: 20px;">
-      <span>Aventuras compartidas</span>
+    <div style="aspect-ratio: 1; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; text-align: center; padding: 20px; box-shadow: 0 4px 15px rgba(217, 119, 6, 0.2);">
+      <span>🌻 Aventuras compartidas</span>
     </div>
-    <div style="aspect-ratio: 1; background: linear-gradient(135deg, #667eea 0%, #f06292 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; text-align: center; padding: 20px;">
-      <span>Nuestro camino</span>
+    <div style="aspect-ratio: 1; background: linear-gradient(135deg, #fca5a5 0%, #fbbf24 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; text-align: center; padding: 20px; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.15);">
+      <span>💕 Nuestro camino</span>
     </div>
   </div>
 
-  <p style="text-align: center; color: #999; font-size: 14px; margin-bottom: 40px;">Crea tu propia galería personalizada</p>
+  <p style="text-align: center; color: #b45309; font-size: 14px; margin-bottom: 40px;">Aquí guardamos lo que nos hace felices</p>
 </div>
 
-<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 80px 40px; text-align: center; color: white;">
-  <h2 style="font-size: 42px; margin-bottom: 20px;">¿Listos para Comenzar?</h2>
-  <p style="font-size: 18px; opacity: 0.95; margin-bottom: 40px;">Crea tu espacio compartido hoy mismo</p>
-  <button style="background: white; color: #667eea; border: none; padding: 16px 48px; font-size: 18px; font-weight: 600; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: all 0.3s ease;">
-    Acceder Ahora
+<div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #dc2626 100%); padding: 80px 40px; text-align: center; color: white; position: relative; overflow: hidden;">
+  <div style="position: absolute; top: 60px; left: 100px; font-size: 45px; opacity: 0.3; animation: float 5s ease-in-out infinite;">🌻</div>
+  <div style="position: absolute; bottom: 60px; right: 120px; font-size: 55px; opacity: 0.25; animation: float 3.8s ease-in-out infinite;">❤️</div>
+
+  <h2 style="font-size: 42px; margin-bottom: 20px;">Accedamos Juntos</h2>
+  <p style="font-size: 18px; opacity: 0.95; margin-bottom: 40px;">A nuestro espacio, nuestros recuerdos, lo nuestro 💕🌻</p>
+  <button style="background: white; color: #d97706; border: none; padding: 16px 48px; font-size: 18px; font-weight: 600; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: all 0.3s ease;">
+    Entrar a Nuestro Espacio
   </button>
 </div>
 
-<div style="background: #f8f9ff; padding: 60px 40px; text-align: center;">
-  <p style="color: #999; font-size: 14px;">© 2024 Nuestro Espacio. Hecho con ❤️ para compartir momentos especiales.</p>
+<div style="background: linear-gradient(180deg, #fef3c7 0%, #fed7aa 100%); padding: 60px 40px; text-align: center; border-top: 2px solid #f59e0b;">
+  <p style="color: #b45309; font-size: 16px; margin-bottom: 10px;">© 2024 Nuestro Espacio</p>
+  <p style="color: #d97706; font-size: 24px;">Hecho con ❤️ y 🌻 para compartir momentos especiales</p>
 </div>
 
 </x-dc>
-<script data-dc-script data-props='{"accentColor":{"editor":"color","default":"#667eea"}}'>
+<script data-dc-script data-props='{"warmthLevel":{"editor":"enum","default":"medium","options":["soft","medium","warm"]}}'>
 class Component extends DCLogic {
   renderVals() {
-    return { accentColor: this.props.accentColor ?? '#667eea' };
+    return { warmthLevel: this.props.warmthLevel ?? 'medium' };
   }
 }
 </script>
