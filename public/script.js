@@ -163,16 +163,15 @@ function renderCarousel() {
         const usuario = momento.usuario_nombre === 'yo' ? '👨' : '👩';
 
         card.innerHTML = `
+            <div class="momento-foto-container">
+                <img src="${momento.foto_url}" alt="${titulo}" class="momento-foto">
+            </div>
             <div class="momento-header">
                 <div class="momento-titulo">${titulo}</div>
                 <div class="momento-fecha">${fechaFormato}</div>
             </div>
-            <div class="momento-foto-container">
-                <img src="${momento.foto_url}" alt="${titulo}" class="momento-foto">
-            </div>
             <div class="momento-decoracion">🌻 ❤️ 🌻</div>
             <div class="momento-descripcion">"${descripcion}"</div>
-            <div style="font-size: 11px; color: #b45309; margin-top: 10px;">Compartido por ${usuario}</div>
         `;
 
         momentosCarousel.appendChild(card);
