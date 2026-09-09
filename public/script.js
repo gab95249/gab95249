@@ -1,8 +1,9 @@
 // Estado global
-let currentUser = null;
-let currentUserColor = null;
+let currentUser = 1; // Usuario anónimo
 let momentos = [];
 let currentMomentoIndex = 0;
+let touchStartX = 0;
+let touchEndX = 0;
 
 // Constantes
 const maxClicks = 5;
@@ -11,13 +12,8 @@ const maxFontSize = 180;
 let heartClickCount = 0;
 
 // Pantallas
-const loginScreen = document.getElementById('login-screen');
 const splashScreen = document.getElementById('splash-screen');
 const mainScreen = document.getElementById('main-screen');
-
-// DOM - Login
-const loginForm = document.getElementById('login-form');
-const loginError = document.getElementById('login-error');
 
 // DOM - Splash
 const heart = document.getElementById('heart');
@@ -33,66 +29,20 @@ const momentCounter = document.getElementById('moment-counter');
 const uploadFormContainer = document.getElementById('upload-form-container');
 const uploadError = document.getElementById('upload-error');
 const uploadSuccess = document.getElementById('upload-success');
+const carouselWrapper = document.querySelector('.carousel-wrapper');
 
 // Event Listeners
-loginForm.addEventListener('submit', login);
 uploadForm.addEventListener('submit', subirFoto);
+carouselWrapper?.addEventListener('touchstart', handleSwipeStart, false);
+carouselWrapper?.addEventListener('touchend', handleSwipeEnd, false);
 
-// ==================== LOGIN ====================
-function selectUser(btn) {
-    document.querySelectorAll('.user-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    document.getElementById('usuario').value = btn.dataset.user;
-}
-
-function login(event) {
-    event.preventDefault();
-    clearMessages();
-
-    const usuario = document.getElementById('usuario').value;
-    const contrasena = document.getElementById('contrasena').value;
-
-    if (!usuario || !contrasena) {
-        showError(loginError, 'Selecciona un usuario');
-        return;
-    }
-
-    fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ usuario, contrasena })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            currentUser = data.usuario_id;
-            currentUserColor = data.color;
-            localStorage.setItem('usuario_id', data.usuario_id);
-            localStorage.setItem('usuario_nombre', data.usuario_nombre);
-
-            // Mostrar splash screen
-            showScreen('splash');
-            heartClickCount = 0;
-            resetHeart();
-        } else {
-            showError(loginError, data.error || 'Credenciales inválidas');
-        }
-    })
-    .catch(err => showError(loginError, 'Error al conectar'));
-}
-
+// ==================== LOGOUT ====================
 function logout() {
-    currentUser = null;
-    currentUserColor = null;
-    localStorage.removeItem('usuario_id');
-    localStorage.removeItem('usuario_nombre');
     heartClickCount = 0;
     momentos = [];
     currentMomentoIndex = 0;
-    showScreen('login');
-    document.getElementById('usuario').value = '';
-    document.getElementById('contrasena').value = '';
-    document.querySelectorAll('.user-btn').forEach(b => b.classList.remove('selected'));
+    showScreen('splash');
+    resetHeart();
 }
 
 // ==================== SPLASH SCREEN ====================
@@ -179,9 +129,7 @@ function resetHeart() {
 
 // ==================== MAIN SCREEN ====================
 function updateUserBadge() {
-    const usuario = localStorage.getItem('usuario_nombre') || 'Usuario';
-    const displayName = usuario === 'yo' ? '👨 Yo' : '👩 Mi Novia';
-    userBadge.textContent = displayName;
+    userBadge.textContent = '💕 Nuestro Espacio';
 }
 
 function cargarMomentos() {
@@ -302,7 +250,7 @@ function subirFoto(event) {
     const formData = new FormData();
     formData.append('foto', foto);
     formData.append('usuario_id', currentUser);
-    formData.append('usuario_nombre', localStorage.getItem('usuario_nombre'));
+    formData.append('usuario_nombre', 'Nosotros');
     formData.append('titulo', titulo);
     formData.append('descripcion', descripcion);
 
@@ -326,13 +274,52 @@ function subirFoto(event) {
     .catch(err => showError(uploadError, 'Error al conectar'));
 }
 
+// ==================== TOUCH/SWIPE ====================
+function handleSwipeStart(event) {
+    touchStartX = event.changedTouches[0].screenX;
+}
+
+function handleSwipeEnd(event) {
+    touchEndX = event.changedTouches[0].screenX;
+    handleSwipe();
+}
+
+function handleSwipe() {
+    const swipeThreshold = 50;
+    const diff = touchStartX - touchEndX;
+
+    if (Math.abs(diff) > swipeThreshold) {
+        if (diff > 0) {
+            nextMomento();
+        } else {
+            prevMomento();
+        }
+    }
+}
+
+// ==================== LLUVIA DE CORAZONES ====================
+function createHeartRain() {
+    const hearts = ['❤️', '💕', '💗', '💖'];
+
+    setInterval(() => {
+        const heart = document.createElement('div');
+        heart.className = 'heart-rain';
+        heart.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+        heart.style.left = Math.random() * 100 + '%';
+        heart.style.animationDuration = (3 + Math.random() * 3) + 's';
+        heart.style.animationDelay = Math.random() * 2 + 's';
+
+        document.body.appendChild(heart);
+
+        setTimeout(() => heart.remove(), 7000);
+    }, 400);
+}
+
 // ==================== UTILIDADES ====================
 function showScreen(screenName) {
-    loginScreen.classList.remove('active');
     splashScreen.classList.remove('active');
     mainScreen.classList.remove('active');
 
-    if (screenName === 'login') loginScreen.classList.add('active');
     if (screenName === 'splash') splashScreen.classList.add('active');
     if (screenName === 'main') mainScreen.classList.add('active');
 }
@@ -361,13 +348,10 @@ function clearMessages() {
 
 // ==================== INIT ====================
 window.addEventListener('load', () => {
-    const usuarioId = localStorage.getItem('usuario_id');
-    if (usuarioId) {
-        currentUser = usuarioId;
-        showScreen('main');
-        updateUserBadge();
-        cargarMomentos();
-    } else {
-        showScreen('login');
-    }
+    // Iniciar directo con splash screen
+    showScreen('splash');
+    resetHeart();
+
+    // Iniciar lluvia de corazones
+    createHeartRain();
 });
