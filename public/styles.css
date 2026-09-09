@@ -6,27 +6,21 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #87ceeb 0%, #e0f6ff 50%, #90ee90 100%);
+    background: url('/sunflower-bg.jpg') center/cover no-repeat fixed;
     min-height: 100vh;
     color: #333;
     position: relative;
     overflow-x: hidden;
 }
 
-/* Campo de girasoles - fondo */
-body::before {
-    content: '🌻 🌻 🌻 🌻 🌻 🌻 🌻 🌻';
+body::after {
+    content: '';
     position: fixed;
-    bottom: 0;
+    top: 0;
     left: 0;
     right: 0;
-    width: 100%;
-    font-size: 60px;
-    opacity: 0.2;
-    line-height: 1.2;
-    word-break: break-all;
-    white-space: pre-wrap;
-    overflow: hidden;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.1);
     pointer-events: none;
     z-index: 0;
 }
@@ -238,39 +232,11 @@ body::before {
 
 /* SPLASH SCREEN */
 #splash-screen {
-    background: linear-gradient(180deg, #87ceeb 0%, #e0f6ff 50%, #f0e68c 100%);
     justify-content: center;
     align-items: center;
     padding: 20px;
     position: relative;
-}
-
-#splash-screen::before {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 150px;
-    background: linear-gradient(to top,
-        rgba(255, 215, 0, 0.3) 0%,
-        rgba(255, 215, 0, 0.1) 50%,
-        transparent 100%);
-    pointer-events: none;
-}
-
-#splash-screen::after {
-    content: '🌻 🌻 🌻 🌻 🌻 🌻 🌻 🌻 🌻 🌻';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    font-size: 50px;
-    opacity: 0.25;
-    line-height: 1;
-    word-break: break-all;
-    overflow: hidden;
-    pointer-events: none;
+    background: rgba(0, 0, 0, 0.15);
 }
 
 .splash-container {
@@ -402,7 +368,7 @@ body::before {
 
 /* MAIN SCREEN - ALBUM */
 #main-screen {
-    background: #f5f0eb;
+    background: rgba(245, 240, 235, 0.95);
     display: flex;
     flex-direction: column;
     min-height: 100vh;
