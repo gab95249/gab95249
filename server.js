@@ -70,6 +70,7 @@ db.serialize(() => {
             usuario_id INTEGER NOT NULL,
             usuario_nombre TEXT NOT NULL,
             foto_url TEXT NOT NULL,
+            titulo TEXT NOT NULL DEFAULT 'Nuestro Momento',
             descripcion TEXT,
             fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(usuario_id) REFERENCES usuarios(id)
@@ -123,17 +124,17 @@ app.post('/api/login', (req, res) => {
 });
 
 app.post('/api/subir', upload.single('foto'), (req, res) => {
-    const { usuario_id, usuario_nombre, descripcion } = req.body;
+    const { usuario_id, usuario_nombre, titulo, descripcion } = req.body;
 
-    if (!usuario_id || !req.file) {
-        return res.status(400).json({ error: 'Foto y usuario requeridos' });
+    if (!usuario_id || !req.file || !titulo) {
+        return res.status(400).json({ error: 'Foto, usuario y título requeridos' });
     }
 
     const fotoUrl = `/uploads/${req.file.filename}`;
 
     db.run(
-        'INSERT INTO historias (usuario_id, usuario_nombre, foto_url, descripcion) VALUES (?, ?, ?, ?)',
-        [usuario_id, usuario_nombre, fotoUrl, descripcion || ''],
+        'INSERT INTO historias (usuario_id, usuario_nombre, foto_url, titulo, descripcion) VALUES (?, ?, ?, ?, ?)',
+        [usuario_id, usuario_nombre, fotoUrl, titulo, descripcion || ''],
         function(err) {
             if (err) {
                 return res.status(500).json({ error: 'Error guardando la foto' });
@@ -143,6 +144,7 @@ app.post('/api/subir', upload.single('foto'), (req, res) => {
                 success: true,
                 id: this.lastID,
                 foto_url: fotoUrl,
+                titulo: titulo,
                 descripcion: descripcion || ''
             });
         }
@@ -151,14 +153,14 @@ app.post('/api/subir', upload.single('foto'), (req, res) => {
 
 app.get('/api/historia', (req, res) => {
     db.all(
-        'SELECT id, usuario_nombre, foto_url, descripcion, fecha FROM historias ORDER BY fecha DESC',
+        'SELECT id, usuario_id, usuario_nombre, foto_url, titulo, descripcion, fecha FROM historias ORDER BY fecha DESC',
         [],
         (err, rows) => {
             if (err) {
                 return res.status(500).json({ error: 'Error obteniendo la historia' });
             }
 
-            res.json({ historias: rows || [] });
+            res.json({ momentos: rows || [] });
         }
     );
 });
@@ -167,14 +169,14 @@ app.get('/api/mi-historia/:usuario_id', (req, res) => {
     const { usuario_id } = req.params;
 
     db.all(
-        'SELECT id, usuario_nombre, foto_url, descripcion, fecha FROM historias WHERE usuario_id = ? ORDER BY fecha DESC',
+        'SELECT id, usuario_id, usuario_nombre, foto_url, titulo, descripcion, fecha FROM historias WHERE usuario_id = ? ORDER BY fecha DESC',
         [usuario_id],
         (err, rows) => {
             if (err) {
                 return res.status(500).json({ error: 'Error obteniendo tu historia' });
             }
 
-            res.json({ historias: rows || [] });
+            res.json({ momentos: rows || [] });
         }
     );
 });

@@ -40,70 +40,94 @@
         </div>
     </div>
 
-    <!-- Pantalla Principal -->
-    <div id="main-screen" class="screen">
-        <header class="header">
+    <!-- Pantalla Splash (Corazón) -->
+    <div id="splash-screen" class="screen">
+        <div class="splash-container">
             <h1>Nuestro Espacio</h1>
-            <div class="header-actions">
-                <span id="user-badge" class="user-badge"></span>
-                <button class="btn btn-secondary" onclick="logout()">Salir</button>
+            <p class="splash-subtitle">Juntos, siempre juntos</p>
+
+            <div class="heart-container">
+                <div class="heart" id="heart" onclick="handleHeartClick(event)">❤️</div>
             </div>
-        </header>
 
-        <main class="container">
-            <!-- Sección de Subida -->
-            <section class="upload-section" id="upload-section">
-                <h2>Agregar un Momento</h2>
-                <form id="upload-form" onsubmit="subirFoto(event)">
-                    <div class="form-group">
-                        <label for="foto">Selecciona una Foto</label>
-                        <input type="file" id="foto" name="foto" accept="image/*" required>
-                        <div class="preview-container" id="preview-container"></div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="descripcion">Describe este Momento (Opcional)</label>
-                        <textarea id="descripcion" name="descripcion" placeholder="Escribe algo especial..." rows="3"></textarea>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary" id="submit-btn">Subir Foto</button>
-                </form>
-                <div id="upload-error" class="error-message"></div>
-                <div id="upload-success" class="success-message"></div>
-            </section>
-
-            <!-- Nuestra Historia -->
-            <section class="history-section">
-                <h2>Nuestra Historia</h2>
-                <div class="tabs">
-                    <button class="tab-btn active" onclick="showTab('todo', event)">Toda la Historia</button>
-                    <button class="tab-btn" onclick="showTab('mia', event)">Mi Aporte</button>
+            <div class="progress-section">
+                <div class="progress-label">Cargando Amor</div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progressBar"></div>
                 </div>
-
-                <div id="todo-tab" class="tab-content active">
-                    <div id="historia-container" class="historia-grid"></div>
+                <div class="progress-text">
+                    <span id="progressPercent">0</span>%
                 </div>
+            </div>
 
-                <div id="mia-tab" class="tab-content">
-                    <div id="mi-historia-container" class="historia-grid"></div>
-                </div>
-
-                <div id="empty-state" class="empty-state">
-                    <p>📸 Sin fotos aún. ¡Sé el primero en compartir un momento!</p>
-                </div>
-            </section>
-        </main>
+            <p class="hint">Dale click al corazón ✨</p>
+        </div>
     </div>
 
-    <!-- Modal de Foto Completa -->
-    <div id="photo-modal" class="modal">
-        <div class="modal-content">
-            <button class="close-btn" onclick="closeModal()">✕</button>
-            <img id="modal-img" src="" alt="">
-            <div class="modal-info">
-                <h3 id="modal-usuario"></h3>
-                <p id="modal-fecha"></p>
-                <p id="modal-descripcion" class="modal-descripcion"></p>
+    <!-- Pantalla Principal (Álbum) -->
+    <div id="main-screen" class="screen">
+        <!-- Header -->
+        <div class="album-header">
+            <h1>Nuestro Espacio</h1>
+            <div class="header-right">
+                <span id="user-badge" class="user-badge"></span>
+                <button class="btn-logout" onclick="logout()">🚪 Salir</button>
+            </div>
+        </div>
+
+        <!-- Carousel de Momentos -->
+        <div class="album-main">
+            <div class="carousel-container">
+                <button class="carousel-nav prev" onclick="prevMomento()">‹</button>
+
+                <div class="carousel-wrapper">
+                    <div id="momentos-carousel" class="momentos-carousel"></div>
+                </div>
+
+                <button class="carousel-nav next" onclick="nextMomento()">›</button>
+            </div>
+
+            <!-- Indicador de posición -->
+            <div class="carousel-indicator">
+                <span id="moment-counter">0 / 0</span>
+            </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="album-footer">
+            <button class="action-btn" onclick="toggleUploadForm()">➕ Agregar Momento</button>
+        </div>
+
+        <!-- Formulario de carga (oculto inicialmente) -->
+        <div id="upload-form-container" class="upload-form-container hidden">
+            <div class="upload-form-backdrop" onclick="toggleUploadForm()"></div>
+            <div class="upload-form-content">
+                <button class="close-upload" onclick="toggleUploadForm()">✕</button>
+                <h2>Agregar un Nuevo Momento</h2>
+                <form id="upload-form" onsubmit="subirFoto(event)">
+                    <div class="form-group">
+                        <label for="foto">Foto</label>
+                        <input type="file" id="foto" name="foto" accept="image/*" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="titulo">Título</label>
+                        <input type="text" id="titulo" name="titulo" placeholder="Ej: Nuestro primer viaje" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="descripcion">Recuerdo o Frase</label>
+                        <textarea id="descripcion" name="descripcion" placeholder="Cuéntale a nuestro futuro yo qué sentiste en este momento..." rows="4"></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Guardar Momento</button>
+                        <button type="button" class="btn btn-secondary" onclick="toggleUploadForm()">Cancelar</button>
+                    </div>
+
+                    <div id="upload-error" class="error-message"></div>
+                    <div id="upload-success" class="success-message"></div>
+                </form>
             </div>
         </div>
     </div>
