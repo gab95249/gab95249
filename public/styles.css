@@ -368,7 +368,7 @@ body::after {
 
 /* MAIN SCREEN - ALBUM */
 #main-screen {
-    background: rgba(245, 240, 235, 0.95);
+    background: transparent;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
@@ -485,7 +485,7 @@ body::after {
 }
 
 .momento-card {
-    background: white;
+    background: #f5f0eb;
     border-radius: 12px;
     padding: 25px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
