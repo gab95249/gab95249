@@ -257,7 +257,10 @@ function subirFoto(event) {
         method: 'POST',
         body: formData
     })
-    .then(res => res.json())
+    .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+    })
     .then(data => {
         if (data.success) {
             showSuccess(uploadSuccess, 'Momento guardado con éxito');
@@ -270,7 +273,10 @@ function subirFoto(event) {
             showError(uploadError, data.error || 'Error al subir');
         }
     })
-    .catch(err => showError(uploadError, 'Error al conectar'));
+    .catch(err => {
+        console.error('Upload error:', err);
+        showError(uploadError, err.message || 'Error al conectar');
+    });
 }
 
 // ==================== TOUCH/SWIPE ====================
@@ -340,7 +346,6 @@ function showSuccess(element, message) {
 }
 
 function clearMessages() {
-    loginError.classList.remove('show');
     uploadError.classList.remove('show');
     uploadSuccess.classList.remove('show');
 }
