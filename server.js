@@ -75,7 +75,12 @@ db.serialize(() => {
             fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(usuario_id) REFERENCES usuarios(id)
         )
-    `);
+    `, () => {
+        // Agregar columna titulo si no existe (para bases de datos antiguas)
+        db.run('ALTER TABLE historias ADD COLUMN titulo TEXT NOT NULL DEFAULT "Nuestro Momento"', (err) => {
+            if (!err) console.log('Columna titulo agregada a historias');
+        });
+    });
 
     // Insertar usuarios de ejemplo si no existen
     const usuarios = [
