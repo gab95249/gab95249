@@ -263,6 +263,7 @@ function subirFoto(event) {
     const titulo = document.getElementById('titulo').value;
     const fechaRecuerdo = document.getElementById('fecha-recuerdo').value;
     const descripcion = document.getElementById('descripcion').value;
+    const submitBtn = uploadForm.querySelector('button[type="submit"]');
 
     if (!foto) {
         showError(uploadError, 'Selecciona una foto');
@@ -278,6 +279,9 @@ function subirFoto(event) {
         showError(uploadError, 'Selecciona la fecha del recuerdo');
         return;
     }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Guardando...';
 
     const formData = new FormData();
     formData.append('foto', foto);
@@ -302,14 +306,20 @@ function subirFoto(event) {
             setTimeout(() => {
                 toggleUploadForm();
                 cargarMomentos();
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Guardar Momento';
             }, 1000);
         } else {
             showError(uploadError, data.error || 'Error al subir');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Guardar Momento';
         }
     })
     .catch(err => {
         console.error('Upload error:', err);
         showError(uploadError, err.message || 'Error al conectar');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Guardar Momento';
     });
 }
 
