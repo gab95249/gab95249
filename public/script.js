@@ -37,6 +37,14 @@ const carouselWrapper = document.querySelector('.carousel-wrapper');
 carouselWrapper?.addEventListener('touchstart', handleSwipeStart, false);
 carouselWrapper?.addEventListener('touchend', handleSwipeEnd, false);
 
+// Mini-carousel swipe support (delegated)
+document.addEventListener('touchstart', handleMiniCarrouselTouchStart, false);
+document.addEventListener('touchend', handleMiniCarrouselTouchEnd, false);
+
+let miniCarrouselTouchStart = 0;
+let miniCarrouselTouchEnd = 0;
+let miniCarrouselIndex = -1;
+
 // ==================== LOGOUT ====================
 function logout() {
     heartClickCount = 0;
@@ -220,9 +228,7 @@ function renderCarousel() {
         if (fotoCount > 1) {
             miniCarrouselHTML = `
                 <div class="mini-carousel-controls">
-                    <button class="mini-carousel-btn prev" onclick="prevMiniCarrusel(${index})" ${fotoActual === 0 ? 'disabled' : ''}>‹</button>
                     <span class="mini-carousel-counter">${fotoActual + 1}/${fotoCount}</span>
-                    <button class="mini-carousel-btn next" onclick="nextMiniCarrusel(${index})" ${fotoActual === fotoCount - 1 ? 'disabled' : ''}>›</button>
                 </div>
             `;
         }
@@ -431,6 +437,45 @@ function handleSwipe() {
             nextMomento();
         } else {
             prevMomento();
+        }
+    }
+}
+
+function handleMiniCarrouselTouchStart(event) {
+    const miniCarousel = event.target.closest('.mini-carousel');
+    if (!miniCarousel) return;
+
+    miniCarrouselTouchStart = event.changedTouches[0].screenX;
+    miniCarrouselIndex = -1;
+
+    const card = miniCarousel.closest('.momento-card');
+    if (card) {
+        const cardIndex = Array.from(document.querySelectorAll('.momento-card')).indexOf(card);
+        miniCarrouselIndex = cardIndex;
+    }
+}
+
+function handleMiniCarrouselTouchEnd(event) {
+    if (miniCarrouselIndex === -1) return;
+
+    const miniCarousel = event.target.closest('.mini-carousel');
+    if (!miniCarousel) return;
+
+    miniCarrouselTouchEnd = event.changedTouches[0].screenX;
+    handleMiniCarrouselSwipe();
+}
+
+function handleMiniCarrouselSwipe() {
+    if (miniCarrouselIndex === -1) return;
+
+    const swipeThreshold = 50;
+    const diff = miniCarrouselTouchStart - miniCarrouselTouchEnd;
+
+    if (Math.abs(diff) > swipeThreshold) {
+        if (diff > 0) {
+            nextMiniCarrusel(miniCarrouselIndex);
+        } else {
+            prevMiniCarrusel(miniCarrouselIndex);
         }
     }
 }
