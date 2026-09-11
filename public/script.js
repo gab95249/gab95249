@@ -32,7 +32,6 @@ const uploadSuccess = document.getElementById('upload-success');
 const carouselWrapper = document.querySelector('.carousel-wrapper');
 
 // Event Listeners
-uploadForm.addEventListener('submit', subirFoto);
 carouselWrapper?.addEventListener('touchstart', handleSwipeStart, false);
 carouselWrapper?.addEventListener('touchend', handleSwipeEnd, false);
 
