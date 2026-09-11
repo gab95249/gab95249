@@ -566,6 +566,12 @@ body::after {
     background: rgba(255, 255, 255, 0.15);
 }
 
+.mini-carousel {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+}
+
 .momento-foto {
     width: 100%;
     aspect-ratio: 1;
@@ -574,6 +580,63 @@ body::after {
     box-shadow: none;
     border: 20px solid rgba(255, 255, 255, 0.25);
     display: block;
+    transition: opacity 0.3s ease;
+}
+
+.momento-foto.hidden {
+    display: none;
+}
+
+.momento-foto.active {
+    display: block;
+    opacity: 1;
+}
+
+.mini-carousel-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 8px 12px;
+    border-radius: 20px;
+    z-index: 10;
+}
+
+.mini-carousel-btn {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    color: white;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.mini-carousel-btn:hover:not(:disabled) {
+    transform: scale(1.1);
+}
+
+.mini-carousel-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.mini-carousel-counter {
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 40px;
+    text-align: center;
 }
 
 .momento-decoracion {

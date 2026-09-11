@@ -1,7 +1,9 @@
 // Estado global
 let currentUser = 1; // Usuario anónimo
 let momentos = [];
+let momentosAgrupados = []; // Agrupados por fecha
 let currentMomentoIndex = 0;
+let miniCarrouselIndex = {}; // Índice de mini-carrusel por fecha
 let touchStartX = 0;
 let touchEndX = 0;
 
@@ -167,6 +169,31 @@ function mostrarYears() {
     }
 }
 
+function agruparMomentosPorFecha() {
+    const grupos = {};
+    momentos.forEach(momento => {
+        const fechaRecuerdo = momento.fecha_recuerdo || momento.fecha;
+        const titulo = momento.titulo || 'Nuestro Momento';
+        const key = `${fechaRecuerdo}-${titulo}`;
+
+        if (!grupos[key]) {
+            grupos[key] = {
+                fecha: fechaRecuerdo,
+                titulo: titulo,
+                descripcion: momento.descripcion || 'Un momento especial compartido',
+                fotos: []
+            };
+        }
+        grupos[key].fotos.push(momento);
+    });
+
+    momentosAgrupados = Object.values(grupos);
+    miniCarrouselIndex = {};
+    momentosAgrupados.forEach((_, i) => {
+        miniCarrouselIndex[i] = 0;
+    });
+}
+
 function renderCarousel() {
     momentosCarousel.innerHTML = '';
 
@@ -176,20 +203,38 @@ function renderCarousel() {
         return;
     }
 
-    momentos.forEach((momento, index) => {
+    agruparMomentosPorFecha();
+
+    momentosAgrupados.forEach((grupo, index) => {
         const card = document.createElement('div');
         card.className = 'momento-card';
         if (index === currentMomentoIndex) card.classList.add('active');
 
-        const fechaRecuerdo = momento.fecha_recuerdo || momento.fecha;
-        const fechaFormato = formatearFecha(fechaRecuerdo);
-        const titulo = momento.titulo || 'Nuestro Momento';
-        const descripcion = momento.descripcion || 'Un momento especial compartido';
-        const usuario = momento.usuario_nombre === 'yo' ? '👨' : '👩';
+        const fechaFormato = formatearFecha(grupo.fecha);
+        const titulo = grupo.titulo;
+        const descripcion = grupo.descripcion;
+        const fotoCount = grupo.fotos.length;
+        const fotoActual = miniCarrouselIndex[index] || 0;
+
+        let miniCarrouselHTML = '';
+        if (fotoCount > 1) {
+            miniCarrouselHTML = `
+                <div class="mini-carousel-controls">
+                    <button class="mini-carousel-btn prev" onclick="prevMiniCarrusel(${index})" ${fotoActual === 0 ? 'disabled' : ''}>‹</button>
+                    <span class="mini-carousel-counter">${fotoActual + 1}/${fotoCount}</span>
+                    <button class="mini-carousel-btn next" onclick="nextMiniCarrusel(${index})" ${fotoActual === fotoCount - 1 ? 'disabled' : ''}>›</button>
+                </div>
+            `;
+        }
 
         card.innerHTML = `
             <div class="momento-foto-container">
-                <img src="${momento.foto_url}" alt="${titulo}" class="momento-foto">
+                <div class="mini-carousel">
+                    ${grupo.fotos.map((foto, i) => `
+                        <img src="${foto.foto_url}" alt="${titulo}" class="momento-foto ${i === fotoActual ? 'active' : 'hidden'}">
+                    `).join('')}
+                </div>
+                ${miniCarrouselHTML}
             </div>
             <div class="momento-header">
                 <div class="momento-titulo">${titulo}</div>
@@ -206,8 +251,50 @@ function renderCarousel() {
     updateNavButtons();
 }
 
+function nextMiniCarrusel(index) {
+    const grupo = momentosAgrupados[index];
+    if (!grupo) return;
+
+    const currentIndex = miniCarrouselIndex[index] || 0;
+    if (currentIndex < grupo.fotos.length - 1) {
+        miniCarrouselIndex[index] = currentIndex + 1;
+        updateMiniCarrusel(index);
+    }
+}
+
+function prevMiniCarrusel(index) {
+    const currentIndex = miniCarrouselIndex[index] || 0;
+    if (currentIndex > 0) {
+        miniCarrouselIndex[index] = currentIndex - 1;
+        updateMiniCarrusel(index);
+    }
+}
+
+function updateMiniCarrusel(index) {
+    const grupo = momentosAgrupados[index];
+    if (!grupo) return;
+
+    const fotoActual = miniCarrouselIndex[index] || 0;
+    const card = document.querySelectorAll('.momento-card')[index];
+    if (!card) return;
+
+    const fotos = card.querySelectorAll('.momento-foto');
+    fotos.forEach((foto, i) => {
+        foto.classList.toggle('hidden', i !== fotoActual);
+        foto.classList.toggle('active', i === fotoActual);
+    });
+
+    const counter = card.querySelector('.mini-carousel-counter');
+    if (counter) counter.textContent = `${fotoActual + 1}/${grupo.fotos.length}`;
+
+    const prevBtn = card.querySelector('.mini-carousel-btn.prev');
+    const nextBtn = card.querySelector('.mini-carousel-btn.next');
+    if (prevBtn) prevBtn.disabled = fotoActual === 0;
+    if (nextBtn) nextBtn.disabled = fotoActual === grupo.fotos.length - 1;
+}
+
 function updateCarouselIndicator() {
-    momentCounter.textContent = `${currentMomentoIndex + 1} / ${momentos.length}`;
+    momentCounter.textContent = `${currentMomentoIndex + 1} / ${momentosAgrupados.length}`;
 }
 
 function updateNavButtons() {
@@ -215,11 +302,11 @@ function updateNavButtons() {
     const nextBtn = document.querySelector('.carousel-nav.next');
 
     prevBtn.disabled = currentMomentoIndex === 0;
-    nextBtn.disabled = currentMomentoIndex === momentos.length - 1;
+    nextBtn.disabled = currentMomentoIndex === momentosAgrupados.length - 1;
 }
 
 function nextMomento() {
-    if (currentMomentoIndex < momentos.length - 1) {
+    if (currentMomentoIndex < momentosAgrupados.length - 1) {
         currentMomentoIndex++;
         updateCarousel();
     }
@@ -258,14 +345,14 @@ function subirFoto(event) {
     event.preventDefault();
     clearMessages();
 
-    const foto = document.getElementById('foto').files[0];
+    const fotos = Array.from(document.getElementById('foto').files);
     const titulo = document.getElementById('titulo').value;
     const fechaRecuerdo = document.getElementById('fecha-recuerdo').value;
     const descripcion = document.getElementById('descripcion').value;
     const submitBtn = uploadForm.querySelector('button[type="submit"]');
 
-    if (!foto) {
-        showError(uploadError, 'Selecciona una foto');
+    if (fotos.length === 0) {
+        showError(uploadError, 'Selecciona al menos una foto');
         return;
     }
 
@@ -280,43 +367,46 @@ function subirFoto(event) {
     }
 
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Guardando...';
+    submitBtn.textContent = `Guardando (0/${fotos.length})...`;
 
-    const formData = new FormData();
-    formData.append('foto', foto);
-    formData.append('usuario_id', currentUser);
-    formData.append('usuario_nombre', 'Nosotros');
-    formData.append('titulo', titulo);
-    formData.append('fecha_recuerdo', fechaRecuerdo);
-    formData.append('descripcion', descripcion);
+    const uploadPromises = fotos.map((foto, index) => {
+        const formData = new FormData();
+        formData.append('foto', foto);
+        formData.append('usuario_id', currentUser);
+        formData.append('usuario_nombre', 'Nosotros');
+        formData.append('titulo', titulo);
+        formData.append('fecha_recuerdo', fechaRecuerdo);
+        formData.append('descripcion', descripcion);
 
-    fetch('/api/subir', {
-        method: 'POST',
-        body: formData
-    })
-    .then(res => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-    })
-    .then(data => {
-        if (data.success) {
-            showSuccess(uploadSuccess, 'Momento guardado con éxito');
-            uploadForm.reset();
-            setTimeout(() => {
-                toggleUploadForm();
-                cargarMomentos();
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Guardar Momento';
-            }, 1000);
-        } else {
-            showError(uploadError, data.error || 'Error al subir');
+        return fetch('/api/subir', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+        })
+        .then(data => {
+            submitBtn.textContent = `Guardando (${index + 1}/${fotos.length})...`;
+            if (!data.success) throw new Error(data.error || 'Error al subir');
+            return data;
+        });
+    });
+
+    Promise.all(uploadPromises)
+    .then(results => {
+        showSuccess(uploadSuccess, `${results.length} foto(s) guardada(s) con éxito`);
+        uploadForm.reset();
+        setTimeout(() => {
+            toggleUploadForm();
+            cargarMomentos();
             submitBtn.disabled = false;
             submitBtn.textContent = 'Guardar Momento';
-        }
+        }, 1000);
     })
     .catch(err => {
         console.error('Upload error:', err);
-        showError(uploadError, err.message || 'Error al conectar');
+        showError(uploadError, err.message || 'Error al subir las fotos');
         submitBtn.disabled = false;
         submitBtn.textContent = 'Guardar Momento';
     });
