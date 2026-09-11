@@ -433,6 +433,24 @@ body::after {
     width: 100%;
 }
 
+.years-container {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.year-badge {
+    font-size: 18px;
+    font-weight: 600;
+    color: #d97706;
+    padding: 8px 16px;
+    background: rgba(217, 119, 6, 0.1);
+    border-radius: 20px;
+    border: 1px solid rgba(217, 119, 6, 0.3);
+}
+
 .carousel-container {
     position: relative;
     width: 100%;

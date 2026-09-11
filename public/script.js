@@ -137,10 +137,35 @@ function cargarMomentos() {
         .then(res => res.json())
         .then(data => {
             momentos = data.momentos || [];
+            // Ordenar por fecha_recuerdo (más antigua primero)
+            momentos.sort((a, b) => {
+                const fechaA = new Date(a.fecha_recuerdo || a.fecha);
+                const fechaB = new Date(b.fecha_recuerdo || b.fecha);
+                return fechaA - fechaB;
+            });
             currentMomentoIndex = 0;
+            mostrarYears();
             renderCarousel();
         })
         .catch(err => console.error('Error cargando momentos:', err));
+}
+
+function mostrarYears() {
+    if (momentos.length === 0) return;
+
+    const years = new Set();
+    momentos.forEach(momento => {
+        const fecha = new Date(momento.fecha_recuerdo || momento.fecha);
+        years.add(fecha.getFullYear());
+    });
+
+    const yearsContainer = document.getElementById('years-container');
+    if (yearsContainer) {
+        yearsContainer.innerHTML = Array.from(years)
+            .sort((a, b) => a - b)
+            .map(year => `<span class="year-badge">${year}</span>`)
+            .join(' ');
+    }
 }
 
 function renderCarousel() {
@@ -157,7 +182,8 @@ function renderCarousel() {
         card.className = 'momento-card';
         if (index === currentMomentoIndex) card.classList.add('active');
 
-        const fechaFormato = formatearFecha(momento.fecha);
+        const fechaRecuerdo = momento.fecha_recuerdo || momento.fecha;
+        const fechaFormato = formatearFecha(fechaRecuerdo);
         const titulo = momento.titulo || 'Nuestro Momento';
         const descripcion = momento.descripcion || 'Un momento especial compartido';
         const usuario = momento.usuario_nombre === 'yo' ? '👨' : '👩';
@@ -223,6 +249,7 @@ function toggleUploadForm() {
     if (!uploadFormContainer.classList.contains('hidden')) {
         document.getElementById('foto').value = '';
         document.getElementById('titulo').value = '';
+        document.getElementById('fecha-recuerdo').value = '';
         document.getElementById('descripcion').value = '';
         clearMessages();
     }
@@ -234,6 +261,7 @@ function subirFoto(event) {
 
     const foto = document.getElementById('foto').files[0];
     const titulo = document.getElementById('titulo').value;
+    const fechaRecuerdo = document.getElementById('fecha-recuerdo').value;
     const descripcion = document.getElementById('descripcion').value;
 
     if (!foto) {
@@ -246,11 +274,17 @@ function subirFoto(event) {
         return;
     }
 
+    if (!fechaRecuerdo) {
+        showError(uploadError, 'Selecciona la fecha del recuerdo');
+        return;
+    }
+
     const formData = new FormData();
     formData.append('foto', foto);
     formData.append('usuario_id', currentUser);
     formData.append('usuario_nombre', 'Nosotros');
     formData.append('titulo', titulo);
+    formData.append('fecha_recuerdo', fechaRecuerdo);
     formData.append('descripcion', descripcion);
 
     fetch('/api/subir', {
