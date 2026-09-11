@@ -43,7 +43,7 @@ document.addEventListener('touchend', handleMiniCarrouselTouchEnd, false);
 
 let miniCarrouselTouchStart = 0;
 let miniCarrouselTouchEnd = 0;
-let miniCarrouselIndex = -1;
+let currentMiniCarrouselIndex = -1;
 
 // ==================== LOGOUT ====================
 function logout() {
@@ -446,17 +446,17 @@ function handleMiniCarrouselTouchStart(event) {
     if (!miniCarousel) return;
 
     miniCarrouselTouchStart = event.changedTouches[0].screenX;
-    miniCarrouselIndex = -1;
+    currentMiniCarrouselIndex = -1;
 
     const card = miniCarousel.closest('.momento-card');
     if (card) {
         const cardIndex = Array.from(document.querySelectorAll('.momento-card')).indexOf(card);
-        miniCarrouselIndex = cardIndex;
+        currentMiniCarrouselIndex = cardIndex;
     }
 }
 
 function handleMiniCarrouselTouchEnd(event) {
-    if (miniCarrouselIndex === -1) return;
+    if (currentMiniCarrouselIndex === -1) return;
 
     const miniCarousel = event.target.closest('.mini-carousel');
     if (!miniCarousel) return;
@@ -466,16 +466,16 @@ function handleMiniCarrouselTouchEnd(event) {
 }
 
 function handleMiniCarrouselSwipe() {
-    if (miniCarrouselIndex === -1) return;
+    if (currentMiniCarrouselIndex === -1) return;
 
     const swipeThreshold = 50;
     const diff = miniCarrouselTouchStart - miniCarrouselTouchEnd;
 
     if (Math.abs(diff) > swipeThreshold) {
         if (diff > 0) {
-            nextMiniCarrusel(miniCarrouselIndex);
+            nextMiniCarrusel(currentMiniCarrouselIndex);
         } else {
-            prevMiniCarrusel(miniCarrouselIndex);
+            prevMiniCarrusel(currentMiniCarrouselIndex);
         }
     }
 }
