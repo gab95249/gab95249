@@ -485,10 +485,10 @@ body::after {
 }
 
 .momento-card {
-    background: white;
+    background: rgba(255, 255, 255, 0.12);
     border-radius: 0;
     padding: 0;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
     text-align: center;
     display: none;
     animation: cardSlideIn 0.5s ease;
@@ -498,6 +498,8 @@ body::after {
     justify-content: flex-start;
     max-width: 350px;
     overflow: hidden;
+    margin: 5px;
+    backdrop-filter: blur(2px);
 }
 
 .momento-card.active {
@@ -518,7 +520,7 @@ body::after {
 .momento-header {
     margin-bottom: 0;
     padding: 30px 20px 40px 20px;
-    background: white;
+    background: rgba(255, 255, 255, 0.15);
     border-top: none;
     text-align: center;
 }
@@ -543,7 +545,7 @@ body::after {
 .momento-foto-container {
     margin: 20px;
     position: relative;
-    background: white;
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .momento-foto {
@@ -552,7 +554,7 @@ body::after {
     object-fit: cover;
     border-radius: 0;
     box-shadow: none;
-    border: 20px solid white;
+    border: 20px solid rgba(255, 255, 255, 0.25);
     display: block;
 }
 
