@@ -461,31 +461,6 @@ body::after {
     gap: 20px;
 }
 
-.carousel-nav {
-    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-    color: white;
-    border: none;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    font-size: 30px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.carousel-nav:hover {
-    transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4);
-}
-
-.carousel-nav:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
 
 .carousel-wrapper {
     flex: 1;
