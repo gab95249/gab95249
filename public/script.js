@@ -452,6 +452,7 @@ function handleMiniCarrouselTouchStart(event) {
     if (card) {
         const cardIndex = Array.from(document.querySelectorAll('.momento-card')).indexOf(card);
         currentMiniCarrouselIndex = cardIndex;
+        console.log('Mini carousel touch start - Card index:', cardIndex, 'X:', miniCarrouselTouchStart);
     }
 }
 
@@ -462,6 +463,7 @@ function handleMiniCarrouselTouchEnd(event) {
     if (!miniCarousel) return;
 
     miniCarrouselTouchEnd = event.changedTouches[0].screenX;
+    console.log('Mini carousel touch end - X:', miniCarrouselTouchEnd, 'Diff:', miniCarrouselTouchStart - miniCarrouselTouchEnd);
     handleMiniCarrouselSwipe();
 }
 
@@ -471,10 +473,14 @@ function handleMiniCarrouselSwipe() {
     const swipeThreshold = 50;
     const diff = miniCarrouselTouchStart - miniCarrouselTouchEnd;
 
+    console.log('Swipe check - diff:', diff, 'threshold:', swipeThreshold, 'index:', currentMiniCarrouselIndex);
+
     if (Math.abs(diff) > swipeThreshold) {
         if (diff > 0) {
+            console.log('Next slide');
             nextMiniCarrusel(currentMiniCarrouselIndex);
         } else {
+            console.log('Previous slide');
             prevMiniCarrusel(currentMiniCarrouselIndex);
         }
     }
