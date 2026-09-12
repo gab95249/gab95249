@@ -559,7 +559,7 @@ body::after {
     object-fit: cover;
     border-radius: 0;
     box-shadow: none;
-    border: 12px solid #d32f2f;
+    border: none;
     opacity: 0;
     transition: opacity 0.5s ease;
     pointer-events: none;
