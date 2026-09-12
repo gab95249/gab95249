@@ -445,6 +445,7 @@ function handleMiniCarrouselTouchStart(event) {
     const miniCarousel = event.target.closest('.mini-carousel');
     if (!miniCarousel) return;
 
+    event.stopPropagation();
     miniCarrouselTouchStart = event.changedTouches[0].screenX;
     currentMiniCarrouselIndex = -1;
 
@@ -462,6 +463,7 @@ function handleMiniCarrouselTouchEnd(event) {
     const miniCarousel = event.target.closest('.mini-carousel');
     if (!miniCarousel) return;
 
+    event.stopPropagation();
     miniCarrouselTouchEnd = event.changedTouches[0].screenX;
     console.log('Mini carousel touch end - X:', miniCarrouselTouchEnd, 'Diff:', miniCarrouselTouchStart - miniCarrouselTouchEnd);
     handleMiniCarrouselSwipe();
