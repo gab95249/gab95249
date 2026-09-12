@@ -536,9 +536,10 @@ body::after {
 }
 
 .momento-foto-container {
-    margin: 30px 30px 0 30px;
+    margin: 20px 20px 0 20px;
     position: relative;
     background: #f5f5f5;
+    flex: 1;
 }
 
 .mini-carousel {
