@@ -155,28 +155,40 @@ function cargarMomentos() {
                 return fechaA - fechaB;
             });
             currentMomentoIndex = 0;
+            agruparMomentosPorFecha();
             mostrarYears();
             renderCarousel();
         })
         .catch(err => console.error('Error cargando momentos:', err));
 }
 
+// Lee el año desde "YYYY-MM-DD" sin pasar por Date, que interpreta la
+// fecha como UTC y puede devolver el año anterior en husos negativos.
+function getYear(fechaStr) {
+    const match = String(fechaStr || '').match(/^(\d{4})/);
+    return match ? parseInt(match[1], 10) : new Date(fechaStr).getFullYear();
+}
+
 function mostrarYears() {
-    if (momentos.length === 0) return;
+    const yearsContainer = document.getElementById('years-container');
+    if (!yearsContainer) return;
+
+    if (momentos.length === 0) {
+        yearsContainer.innerHTML = '';
+        return;
+    }
 
     const years = new Set();
     momentos.forEach(momento => {
-        const fecha = new Date(momento.fecha_recuerdo || momento.fecha);
-        years.add(fecha.getFullYear());
+        years.add(getYear(momento.fecha_recuerdo || momento.fecha));
     });
 
-    const yearsContainer = document.getElementById('years-container');
-    if (yearsContainer) {
-        yearsContainer.innerHTML = Array.from(years)
-            .sort((a, b) => a - b)
-            .map(year => `<span class="year-badge" data-year="${year}" onclick="filtrarPorAño(${year})">${year}</span>`)
-            .join(' ');
-    }
+    const todos = `<span class="year-badge${selectedYear === null ? ' active' : ''}" data-year="todos" onclick="filtrarPorAño(null)">Todos</span>`;
+
+    yearsContainer.innerHTML = todos + Array.from(years)
+        .sort((a, b) => a - b)
+        .map(year => `<span class="year-badge${selectedYear === year ? ' active' : ''}" data-year="${year}" onclick="filtrarPorAño(${year})">${year}</span>`)
+        .join('');
 }
 
 function agruparMomentosPorFecha() {
@@ -198,7 +210,14 @@ function agruparMomentosPorFecha() {
     });
 
     momentosAgrupados_full = Object.values(grupos);
-    momentosAgrupados = momentosAgrupados_full;
+    aplicarFiltro();
+}
+
+function aplicarFiltro() {
+    momentosAgrupados = selectedYear === null
+        ? momentosAgrupados_full
+        : momentosAgrupados_full.filter(grupo => getYear(grupo.fecha) === selectedYear);
+
     miniCarrouselIndex = {};
     momentosAgrupados.forEach((_, i) => {
         miniCarrouselIndex[i] = 0;
@@ -206,26 +225,16 @@ function agruparMomentosPorFecha() {
 }
 
 function filtrarPorAño(year) {
-    const badges = document.querySelectorAll('.year-badge');
-    badges.forEach(badge => badge.classList.remove('active'));
+    // Volver a tocar el año activo lo deselecciona
+    selectedYear = (year === null || selectedYear === year) ? null : year;
 
-    if (selectedYear === year) {
-        // Si clickeamos el mismo año, deseleccionar
-        selectedYear = null;
-        momentosAgrupados = momentosAgrupados_full;
-        currentMomentoIndex = 0;
-    } else {
-        // Filtrar por año
-        selectedYear = year;
-        momentosAgrupados = momentosAgrupados_full.filter(grupo => {
-            const fecha = new Date(grupo.fecha);
-            return fecha.getFullYear() === year;
-        });
-        currentMomentoIndex = 0;
+    aplicarFiltro();
+    currentMomentoIndex = 0;
 
-        // Marcar badge como activo
-        document.querySelector(`[data-year="${year}"]`).classList.add('active');
-    }
+    document.querySelectorAll('.year-badge').forEach(badge => {
+        const badgeYear = badge.dataset.year === 'todos' ? null : parseInt(badge.dataset.year, 10);
+        badge.classList.toggle('active', badgeYear === selectedYear);
+    });
 
     renderCarousel();
 }
@@ -233,13 +242,14 @@ function filtrarPorAño(year) {
 function renderCarousel() {
     momentosCarousel.innerHTML = '';
 
-    if (momentos.length === 0) {
-        momentosCarousel.innerHTML = '<div style="text-align: center; color: #999; padding: 40px;"><p>No hay momentos aún. ¡Agrega el primero! 💕</p></div>';
+    if (momentosAgrupados.length === 0) {
+        const mensaje = momentos.length === 0
+            ? 'No hay momentos aún. ¡Agrega el primero! 💕'
+            : `No hay momentos de ${selectedYear} 🌻`;
+        momentosCarousel.innerHTML = `<div style="text-align: center; color: #fff; padding: 40px; text-shadow: 0 2px 6px rgba(0,0,0,0.6);"><p>${mensaje}</p></div>`;
         momentCounter.textContent = '0 / 0';
         return;
     }
-
-    agruparMomentosPorFecha();
 
     momentosAgrupados.forEach((grupo, index) => {
         const card = document.createElement('div');
@@ -335,8 +345,8 @@ function updateNavButtons() {
     const prevBtn = document.querySelector('.carousel-nav.prev');
     const nextBtn = document.querySelector('.carousel-nav.next');
 
-    prevBtn.disabled = currentMomentoIndex === 0;
-    nextBtn.disabled = currentMomentoIndex === momentosAgrupados.length - 1;
+    if (prevBtn) prevBtn.disabled = currentMomentoIndex === 0;
+    if (nextBtn) nextBtn.disabled = currentMomentoIndex === momentosAgrupados.length - 1;
 }
 
 function nextMomento() {
@@ -487,7 +497,6 @@ function handleMiniCarrouselTouchStart(event) {
     if (card) {
         const cardIndex = Array.from(document.querySelectorAll('.momento-card')).indexOf(card);
         currentMiniCarrouselIndex = cardIndex;
-        console.log('Mini carousel touch start - Card index:', cardIndex, 'X:', miniCarrouselTouchStart);
     }
 }
 
@@ -505,7 +514,6 @@ function handleMiniCarrouselTouchEnd(event) {
 
     event.stopPropagation();
     miniCarrouselTouchEnd = event.changedTouches[0].screenX;
-    console.log('Mini carousel touch end - X:', miniCarrouselTouchEnd, 'Diff:', miniCarrouselTouchStart - miniCarrouselTouchEnd);
     handleMiniCarrouselSwipe();
 }
 
@@ -515,14 +523,10 @@ function handleMiniCarrouselSwipe() {
     const swipeThreshold = 50;
     const diff = miniCarrouselTouchStart - miniCarrouselTouchEnd;
 
-    console.log('Swipe check - diff:', diff, 'threshold:', swipeThreshold, 'index:', currentMiniCarrouselIndex);
-
     if (Math.abs(diff) > swipeThreshold) {
         if (diff > 0) {
-            console.log('Next slide');
             nextMiniCarrusel(currentMiniCarrouselIndex);
         } else {
-            console.log('Previous slide');
             prevMiniCarrusel(currentMiniCarrouselIndex);
         }
     }

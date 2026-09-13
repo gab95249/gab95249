@@ -481,7 +481,7 @@ body::after {
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    overflow: visible;
     max-width: 400px;
 }
 
@@ -492,19 +492,19 @@ body::after {
 
 .momento-card {
     background: #ffffff;
-    border-radius: 0;
-    padding: 0;
+    border-radius: 2px;
+    padding: 14px 14px 0 14px;
     box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4), 0 15px 30px rgba(0, 0, 0, 0.2);
     text-align: center;
     display: none;
     animation: cardSlideIn 0.5s ease;
-    height: 100%;
-    display: flex;
+    height: auto;
     flex-direction: column;
     justify-content: flex-start;
-    max-width: 320px;
+    width: 300px;
+    max-width: 100%;
     overflow: visible;
-    margin: 5px;
+    margin: 5px auto;
 }
 
 .momento-card.active {
@@ -524,7 +524,7 @@ body::after {
 
 .momento-header {
     margin-bottom: 0;
-    padding: 15px 20px 10px 20px;
+    padding: 9px 4px 0 4px;
     background: #ffffff;
     border-top: none;
     text-align: center;
@@ -532,16 +532,17 @@ body::after {
 
 .momento-titulo {
     font-family: 'Great Vibes', cursive;
-    font-size: 24px;
+    font-size: 21px;
     font-weight: 400;
     color: #d97706;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
     letter-spacing: 0;
+    line-height: 1.1;
 }
 
 .momento-fecha {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    font-size: 16px;
+    font-size: 12px;
     color: #000000;
     font-weight: 600;
     letter-spacing: 0;
@@ -551,8 +552,33 @@ body::after {
 .momento-foto-container {
     margin: 0;
     position: relative;
-    background: #f5f5f5;
-    flex: 1;
+    background: #ebebeb;
+}
+
+/* Cinta adhesiva que sostiene la fotografía */
+.momento-foto-container::before,
+.momento-foto-container::after {
+    content: '';
+    position: absolute;
+    top: -10px;
+    width: 64px;
+    height: 19px;
+    background: linear-gradient(160deg, rgba(246, 234, 198, 0.88) 0%, rgba(228, 209, 158, 0.82) 50%, rgba(246, 234, 198, 0.86) 100%);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.55);
+    border-bottom: 1px solid rgba(160, 140, 95, 0.25);
+    z-index: 6;
+    pointer-events: none;
+}
+
+.momento-foto-container::before {
+    left: -16px;
+    transform: rotate(-43deg);
+}
+
+.momento-foto-container::after {
+    right: -16px;
+    transform: rotate(43deg);
 }
 
 .mini-carousel {
@@ -560,36 +586,6 @@ body::after {
     width: 100%;
     aspect-ratio: 1;
     overflow: visible;
-}
-
-.mini-carousel::before {
-    content: '';
-    position: absolute;
-    top: 8px;
-    right: 12px;
-    width: 45px;
-    height: 60px;
-    background: rgba(255, 255, 255, 0.65);
-    transform: rotate(18deg);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.4);
-    border: 1px solid rgba(200, 200, 200, 0.3);
-    z-index: 10;
-    pointer-events: none;
-}
-
-.mini-carousel::after {
-    content: '';
-    position: absolute;
-    top: 20px;
-    left: 10px;
-    width: 40px;
-    height: 55px;
-    background: rgba(255, 255, 255, 0.6);
-    transform: rotate(-15deg);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.4);
-    border: 1px solid rgba(200, 200, 200, 0.3);
-    z-index: 10;
-    pointer-events: none;
 }
 
 .momento-foto {
@@ -602,7 +598,7 @@ body::after {
     object-fit: cover;
     border-radius: 0;
     box-shadow: none;
-    border: 8px solid #d32f2f;
+    border: none;
     opacity: 0;
     transition: opacity 0.5s ease;
     pointer-events: none;
@@ -645,20 +641,20 @@ body::after {
 }
 
 .momento-decoracion {
-    font-size: 14px;
+    font-size: 11px;
     margin: 0;
-    padding: 5px 20px 0 20px;
+    padding: 3px 20px 0 20px;
     color: #d97706;
     letter-spacing: 1px;
 }
 
 .momento-descripcion {
     background: #ffffff;
-    padding: 6px 15px 10px 15px;
+    padding: 2px 8px 14px 8px;
     border-radius: 0;
     font-size: 11px;
     color: #b45309;
-    line-height: 1.3;
+    line-height: 1.25;
     font-style: italic;
     min-height: auto;
     display: flex;
