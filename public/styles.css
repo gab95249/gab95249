@@ -524,7 +524,7 @@ body::after {
 
 .momento-header {
     margin-bottom: 0;
-    padding: 25px 20px 30px 20px;
+    padding: 15px 20px 10px 20px;
     background: #ffffff;
     border-top: none;
     text-align: center;
@@ -532,10 +532,10 @@ body::after {
 
 .momento-titulo {
     font-family: 'Great Vibes', cursive;
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 400;
     color: #d97706;
-    margin-bottom: 6px;
+    margin-bottom: 2px;
     letter-spacing: 0;
 }
 
@@ -549,7 +549,7 @@ body::after {
 }
 
 .momento-foto-container {
-    margin: 20px 20px 0 20px;
+    margin: 0;
     position: relative;
     background: #f5f5f5;
     flex: 1;
@@ -615,22 +615,22 @@ body::after {
 }
 
 .momento-decoracion {
-    font-size: 16px;
+    font-size: 14px;
     margin: 0;
-    padding: 10px 20px;
+    padding: 5px 20px 0 20px;
     color: #d97706;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
 }
 
 .momento-descripcion {
     background: #ffffff;
-    padding: 12px 30px 40px 30px;
+    padding: 8px 20px 15px 20px;
     border-radius: 0;
-    font-size: 14px;
+    font-size: 12px;
     color: #b45309;
-    line-height: 1.5;
+    line-height: 1.4;
     font-style: italic;
-    min-height: 50px;
+    min-height: auto;
     display: flex;
     align-items: center;
     justify-content: center;
