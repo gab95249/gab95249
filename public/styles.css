@@ -449,6 +449,19 @@ body::after {
     background: rgba(217, 119, 6, 0.1);
     border-radius: 20px;
     border: 1px solid rgba(217, 119, 6, 0.3);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.year-badge:hover {
+    background: rgba(217, 119, 6, 0.2);
+    border-color: rgba(217, 119, 6, 0.5);
+}
+
+.year-badge.active {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    color: white;
+    border-color: transparent;
 }
 
 .carousel-container {

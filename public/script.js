@@ -2,10 +2,12 @@
 let currentUser = 1; // Usuario anónimo
 let momentos = [];
 let momentosAgrupados = []; // Agrupados por fecha
+let momentosAgrupados_full = []; // Copia completa sin filtrar
 let currentMomentoIndex = 0;
 let miniCarrouselIndex = {}; // Índice de mini-carrusel por fecha
 let touchStartX = 0;
 let touchEndX = 0;
+let selectedYear = null; // Año seleccionado para filtrar
 
 // Constantes
 const maxClicks = 5;
@@ -172,7 +174,7 @@ function mostrarYears() {
     if (yearsContainer) {
         yearsContainer.innerHTML = Array.from(years)
             .sort((a, b) => a - b)
-            .map(year => `<span class="year-badge">${year}</span>`)
+            .map(year => `<span class="year-badge" data-year="${year}" onclick="filtrarPorAño(${year})">${year}</span>`)
             .join(' ');
     }
 }
@@ -195,11 +197,37 @@ function agruparMomentosPorFecha() {
         grupos[key].fotos.push(momento);
     });
 
-    momentosAgrupados = Object.values(grupos);
+    momentosAgrupados_full = Object.values(grupos);
+    momentosAgrupados = momentosAgrupados_full;
     miniCarrouselIndex = {};
     momentosAgrupados.forEach((_, i) => {
         miniCarrouselIndex[i] = 0;
     });
+}
+
+function filtrarPorAño(year) {
+    const badges = document.querySelectorAll('.year-badge');
+    badges.forEach(badge => badge.classList.remove('active'));
+
+    if (selectedYear === year) {
+        // Si clickeamos el mismo año, deseleccionar
+        selectedYear = null;
+        momentosAgrupados = momentosAgrupados_full;
+        currentMomentoIndex = 0;
+    } else {
+        // Filtrar por año
+        selectedYear = year;
+        momentosAgrupados = momentosAgrupados_full.filter(grupo => {
+            const fecha = new Date(grupo.fecha);
+            return fecha.getFullYear() === year;
+        });
+        currentMomentoIndex = 0;
+
+        // Marcar badge como activo
+        document.querySelector(`[data-year="${year}"]`).classList.add('active');
+    }
+
+    renderCarousel();
 }
 
 function renderCarousel() {
@@ -442,7 +470,13 @@ function handleSwipe() {
 }
 
 function handleMiniCarrouselTouchStart(event) {
-    const miniCarousel = event.target.closest('.mini-carousel');
+    let miniCarousel = event.target.closest('.mini-carousel');
+
+    // Si no encuentra mini-carousel en el target, buscar en el padre
+    if (!miniCarousel && event.target.closest('.momento-foto-container')) {
+        miniCarousel = event.target.closest('.momento-foto-container').querySelector('.mini-carousel');
+    }
+
     if (!miniCarousel) return;
 
     event.stopPropagation();
@@ -460,7 +494,13 @@ function handleMiniCarrouselTouchStart(event) {
 function handleMiniCarrouselTouchEnd(event) {
     if (currentMiniCarrouselIndex === -1) return;
 
-    const miniCarousel = event.target.closest('.mini-carousel');
+    let miniCarousel = event.target.closest('.mini-carousel');
+
+    // Si no encuentra mini-carousel en el target, buscar en el padre
+    if (!miniCarousel && event.target.closest('.momento-foto-container')) {
+        miniCarousel = event.target.closest('.momento-foto-container').querySelector('.mini-carousel');
+    }
+
     if (!miniCarousel) return;
 
     event.stopPropagation();
