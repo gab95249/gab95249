@@ -41,11 +41,11 @@ carouselWrapper?.addEventListener('touchend', handleSwipeEnd, false);
 
 // Mini-carousel swipe support (delegated)
 document.addEventListener('touchstart', handleMiniCarrouselTouchStart, false);
+document.addEventListener('touchmove', handleMiniCarrouselTouchMove, { passive: false });
 document.addEventListener('touchend', handleMiniCarrouselTouchEnd, false);
 
-let miniCarrouselTouchStart = 0;
-let miniCarrouselTouchEnd = 0;
-let currentMiniCarrouselIndex = -1;
+let arrastre = null;
+let swipeDesdeFoto = false;
 
 // ==================== LOGOUT ====================
 function logout() {
@@ -148,11 +148,11 @@ function cargarMomentos() {
         .then(res => res.json())
         .then(data => {
             momentos = data.momentos || [];
-            // Ordenar por fecha_recuerdo (más antigua primero)
+            // El recuerdo más nuevo va primero
             momentos.sort((a, b) => {
                 const fechaA = new Date(a.fecha_recuerdo || a.fecha);
                 const fechaB = new Date(b.fecha_recuerdo || b.fecha);
-                return fechaA - fechaB;
+                return fechaB - fechaA;
             });
             currentMomentoIndex = 0;
             agruparMomentosPorFecha();
@@ -186,7 +186,7 @@ function mostrarYears() {
     const todos = `<span class="year-badge${selectedYear === null ? ' active' : ''}" data-year="todos" onclick="filtrarPorAño(null)">Todos</span>`;
 
     yearsContainer.innerHTML = todos + Array.from(years)
-        .sort((a, b) => a - b)
+        .sort((a, b) => b - a)
         .map(year => `<span class="year-badge${selectedYear === year ? ' active' : ''}" data-year="${year}" onclick="filtrarPorAño(${year})">${year}</span>`)
         .join('');
 }
@@ -274,9 +274,11 @@ function renderCarousel() {
         card.innerHTML = `
             <div class="momento-foto-container">
                 <div class="mini-carousel">
-                    ${grupo.fotos.map((foto, i) => `
-                        <img src="${foto.foto_url}" alt="${titulo}" class="momento-foto ${i === fotoActual ? 'active' : 'hidden'}">
-                    `).join('')}
+                    <div class="mini-carousel-track" style="transform: translate3d(-${fotoActual * 100}%, 0, 0)">
+                        ${grupo.fotos.map(foto => `
+                            <img src="${foto.foto_url}" alt="${titulo}" class="momento-foto" draggable="false">
+                        `).join('')}
+                    </div>
                 </div>
                 ${miniCarrouselHTML}
             </div>
@@ -322,19 +324,14 @@ function updateMiniCarrusel(index) {
     const card = document.querySelectorAll('.momento-card')[index];
     if (!card) return;
 
-    const fotos = card.querySelectorAll('.momento-foto');
-    fotos.forEach((foto, i) => {
-        foto.classList.toggle('hidden', i !== fotoActual);
-        foto.classList.toggle('active', i === fotoActual);
-    });
+    const track = card.querySelector('.mini-carousel-track');
+    if (track) {
+        track.classList.remove('dragging');
+        track.style.transform = `translate3d(-${fotoActual * 100}%, 0, 0)`;
+    }
 
     const counter = card.querySelector('.mini-carousel-counter');
     if (counter) counter.textContent = `${fotoActual + 1}/${grupo.fotos.length}`;
-
-    const prevBtn = card.querySelector('.mini-carousel-btn.prev');
-    const nextBtn = card.querySelector('.mini-carousel-btn.next');
-    if (prevBtn) prevBtn.disabled = fotoActual === 0;
-    if (nextBtn) nextBtn.disabled = fotoActual === grupo.fotos.length - 1;
 }
 
 function updateCarouselIndicator() {
@@ -459,9 +456,12 @@ function subirFoto(event) {
 // ==================== TOUCH/SWIPE ====================
 function handleSwipeStart(event) {
     touchStartX = event.changedTouches[0].screenX;
+    // Lo que nace sobre la foto lo gobierna el mini-carrusel, no la pila de recuerdos
+    swipeDesdeFoto = !!event.target.closest('.momento-foto-container');
 }
 
 function handleSwipeEnd(event) {
+    if (swipeDesdeFoto) return;
     touchEndX = event.changedTouches[0].screenX;
     handleSwipe();
 }
@@ -480,55 +480,80 @@ function handleSwipe() {
 }
 
 function handleMiniCarrouselTouchStart(event) {
-    let miniCarousel = event.target.closest('.mini-carousel');
+    arrastre = null;
 
-    // Si no encuentra mini-carousel en el target, buscar en el padre
-    if (!miniCarousel && event.target.closest('.momento-foto-container')) {
-        miniCarousel = event.target.closest('.momento-foto-container').querySelector('.mini-carousel');
-    }
+    const contenedor = event.target.closest('.momento-foto-container');
+    if (!contenedor) return;
 
-    if (!miniCarousel) return;
+    const track = contenedor.querySelector('.mini-carousel-track');
+    const card = contenedor.closest('.momento-card');
+    if (!track || !card) return;
 
-    event.stopPropagation();
-    miniCarrouselTouchStart = event.changedTouches[0].screenX;
-    currentMiniCarrouselIndex = -1;
+    const cardIndex = Array.from(document.querySelectorAll('.momento-card')).indexOf(card);
+    const grupo = momentosAgrupados[cardIndex];
+    if (!grupo) return;
 
-    const card = miniCarousel.closest('.momento-card');
-    if (card) {
-        const cardIndex = Array.from(document.querySelectorAll('.momento-card')).indexOf(card);
-        currentMiniCarrouselIndex = cardIndex;
-    }
+    const touch = event.changedTouches[0];
+    arrastre = {
+        track,
+        cardIndex,
+        total: grupo.fotos.length,
+        indice: miniCarrouselIndex[cardIndex] || 0,
+        startX: touch.screenX,
+        startY: touch.screenY,
+        ancho: track.offsetWidth || 1,
+        horizontal: false,
+        delta: 0
+    };
 }
 
-function handleMiniCarrouselTouchEnd(event) {
-    if (currentMiniCarrouselIndex === -1) return;
+function handleMiniCarrouselTouchMove(event) {
+    if (!arrastre) return;
 
-    let miniCarousel = event.target.closest('.mini-carousel');
+    const touch = event.changedTouches[0];
+    const dx = touch.screenX - arrastre.startX;
+    const dy = touch.screenY - arrastre.startY;
 
-    // Si no encuentra mini-carousel en el target, buscar en el padre
-    if (!miniCarousel && event.target.closest('.momento-foto-container')) {
-        miniCarousel = event.target.closest('.momento-foto-container').querySelector('.mini-carousel');
+    // Hasta que el gesto se declare horizontal no le quitamos el scroll a la página
+    if (!arrastre.horizontal) {
+        if (Math.abs(dx) < 8 || Math.abs(dx) <= Math.abs(dy)) return;
+        arrastre.horizontal = true;
+        arrastre.track.classList.add('dragging');
     }
 
-    if (!miniCarousel) return;
+    event.preventDefault();
 
-    event.stopPropagation();
-    miniCarrouselTouchEnd = event.changedTouches[0].screenX;
-    handleMiniCarrouselSwipe();
+    // En el primer y último fotograma la foto cede menos, así se siente el tope
+    const enElTope = (arrastre.indice === 0 && dx > 0) ||
+                     (arrastre.indice === arrastre.total - 1 && dx < 0);
+    arrastre.delta = enElTope ? dx * 0.32 : dx;
+
+    const base = -arrastre.indice * arrastre.ancho;
+    arrastre.track.style.transform = `translate3d(${base + arrastre.delta}px, 0, 0)`;
 }
 
-function handleMiniCarrouselSwipe() {
-    if (currentMiniCarrouselIndex === -1) return;
+function handleMiniCarrouselTouchEnd() {
+    if (!arrastre) return;
 
-    const swipeThreshold = 50;
-    const diff = miniCarrouselTouchStart - miniCarrouselTouchEnd;
+    const gesto = arrastre;
+    arrastre = null;
+    gesto.track.classList.remove('dragging');
 
-    if (Math.abs(diff) > swipeThreshold) {
-        if (diff > 0) {
-            nextMiniCarrusel(currentMiniCarrouselIndex);
-        } else {
-            prevMiniCarrusel(currentMiniCarrouselIndex);
-        }
+    if (!gesto.horizontal) return;
+
+    const umbral = gesto.ancho * 0.18;
+    const avanza = gesto.delta < -umbral;
+    const retrocede = gesto.delta > umbral;
+
+    if (avanza && gesto.indice < gesto.total - 1) {
+        nextMiniCarrusel(gesto.cardIndex);
+    } else if (retrocede && gesto.indice > 0) {
+        prevMiniCarrusel(gesto.cardIndex);
+    } else {
+        // Sin fotos por delante el gesto pasa al siguiente recuerdo
+        updateMiniCarrusel(gesto.cardIndex);
+        if (avanza) nextMomento();
+        else if (retrocede) prevMomento();
     }
 }
 
