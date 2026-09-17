@@ -3,10 +3,7 @@ let currentUser = 1; // Usuario anónimo
 let momentos = [];
 let momentosAgrupados = []; // Agrupados por fecha
 let momentosAgrupados_full = []; // Copia completa sin filtrar
-let currentMomentoIndex = 0;
 let miniCarrouselIndex = {}; // Índice de mini-carrusel por fecha
-let touchStartX = 0;
-let touchEndX = 0;
 let selectedYear = null; // Año seleccionado para filtrar
 
 // Constantes
@@ -33,11 +30,6 @@ const momentCounter = document.getElementById('moment-counter');
 const uploadFormContainer = document.getElementById('upload-form-container');
 const uploadError = document.getElementById('upload-error');
 const uploadSuccess = document.getElementById('upload-success');
-const carouselWrapper = document.querySelector('.carousel-wrapper');
-
-// Event Listeners
-carouselWrapper?.addEventListener('touchstart', handleSwipeStart, false);
-carouselWrapper?.addEventListener('touchend', handleSwipeEnd, false);
 
 // Mini-carousel swipe support (delegated)
 document.addEventListener('touchstart', handleMiniCarrouselTouchStart, false);
@@ -45,13 +37,11 @@ document.addEventListener('touchmove', handleMiniCarrouselTouchMove, { passive: 
 document.addEventListener('touchend', handleMiniCarrouselTouchEnd, false);
 
 let arrastre = null;
-let swipeDesdeFoto = false;
 
 // ==================== LOGOUT ====================
 function logout() {
     heartClickCount = 0;
     momentos = [];
-    currentMomentoIndex = 0;
     showScreen('splash');
     resetHeart();
 }
@@ -154,7 +144,6 @@ function cargarMomentos() {
                 const fechaB = new Date(b.fecha_recuerdo || b.fecha);
                 return fechaB - fechaA;
             });
-            currentMomentoIndex = 0;
             agruparMomentosPorFecha();
             mostrarYears();
             renderCarousel();
@@ -229,7 +218,6 @@ function filtrarPorAño(year) {
     selectedYear = (year === null || selectedYear === year) ? null : year;
 
     aplicarFiltro();
-    currentMomentoIndex = 0;
 
     document.querySelectorAll('.year-badge').forEach(badge => {
         const badgeYear = badge.dataset.year === 'todos' ? null : parseInt(badge.dataset.year, 10);
@@ -237,6 +225,7 @@ function filtrarPorAño(year) {
     });
 
     renderCarousel();
+    document.querySelector('.carousel-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function renderCarousel() {
@@ -254,7 +243,6 @@ function renderCarousel() {
     momentosAgrupados.forEach((grupo, index) => {
         const card = document.createElement('div');
         card.className = 'momento-card';
-        if (index === currentMomentoIndex) card.classList.add('active');
 
         const fechaFormato = formatearFecha(grupo.fecha);
         const titulo = grupo.titulo;
@@ -294,7 +282,6 @@ function renderCarousel() {
     });
 
     updateCarouselIndicator();
-    updateNavButtons();
 }
 
 function nextMiniCarrusel(index) {
@@ -335,39 +322,8 @@ function updateMiniCarrusel(index) {
 }
 
 function updateCarouselIndicator() {
-    momentCounter.textContent = `${currentMomentoIndex + 1} / ${momentosAgrupados.length}`;
-}
-
-function updateNavButtons() {
-    const prevBtn = document.querySelector('.carousel-nav.prev');
-    const nextBtn = document.querySelector('.carousel-nav.next');
-
-    if (prevBtn) prevBtn.disabled = currentMomentoIndex === 0;
-    if (nextBtn) nextBtn.disabled = currentMomentoIndex === momentosAgrupados.length - 1;
-}
-
-function nextMomento() {
-    if (currentMomentoIndex < momentosAgrupados.length - 1) {
-        currentMomentoIndex++;
-        updateCarousel();
-    }
-}
-
-function prevMomento() {
-    if (currentMomentoIndex > 0) {
-        currentMomentoIndex--;
-        updateCarousel();
-    }
-}
-
-function updateCarousel() {
-    document.querySelectorAll('.momento-card').forEach((card, index) => {
-        card.classList.remove('active');
-        if (index === currentMomentoIndex) card.classList.add('active');
-    });
-
-    updateCarouselIndicator();
-    updateNavButtons();
+    const total = momentosAgrupados.length;
+    momentCounter.textContent = total === 1 ? '1 recuerdo' : `${total} recuerdos`;
 }
 
 // ==================== UPLOAD ====================
@@ -454,31 +410,6 @@ function subirFoto(event) {
 }
 
 // ==================== TOUCH/SWIPE ====================
-function handleSwipeStart(event) {
-    touchStartX = event.changedTouches[0].screenX;
-    // Lo que nace sobre la foto lo gobierna el mini-carrusel, no la pila de recuerdos
-    swipeDesdeFoto = !!event.target.closest('.momento-foto-container');
-}
-
-function handleSwipeEnd(event) {
-    if (swipeDesdeFoto) return;
-    touchEndX = event.changedTouches[0].screenX;
-    handleSwipe();
-}
-
-function handleSwipe() {
-    const swipeThreshold = 50;
-    const diff = touchStartX - touchEndX;
-
-    if (Math.abs(diff) > swipeThreshold) {
-        if (diff > 0) {
-            nextMomento();
-        } else {
-            prevMomento();
-        }
-    }
-}
-
 function handleMiniCarrouselTouchStart(event) {
     arrastre = null;
 
@@ -550,10 +481,7 @@ function handleMiniCarrouselTouchEnd() {
     } else if (retrocede && gesto.indice > 0) {
         prevMiniCarrusel(gesto.cardIndex);
     } else {
-        // Sin fotos por delante el gesto pasa al siguiente recuerdo
         updateMiniCarrusel(gesto.cardIndex);
-        if (avanza) nextMomento();
-        else if (retrocede) prevMomento();
     }
 }
 
