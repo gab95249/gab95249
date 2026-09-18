@@ -4,6 +4,8 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
+const sharp = require('sharp');
+const heicConvert = require('heic-convert');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,32 +22,54 @@ if (!fs.existsSync('uploads')) {
     fs.mkdirSync('uploads');
 }
 
-// Configurar multer para subida de fotos
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads/');
-    },
-    filename: (req, file, cb) => {
-        const uniqueName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}${path.extname(file.originalname)}`;
-        cb(null, uniqueName);
+const MAX_SUBIDA = 25 * 1024 * 1024;
+
+class SubidaInvalida extends Error {
+    constructor(mensaje) {
+        super(mensaje);
+        this.status = 400;
+    }
+}
+
+// La foto se procesa en memoria antes de escribirla, así que multer no toca el disco
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: MAX_SUBIDA },
+    fileFilter: (req, file, cb) => {
+        const extensionValida = /\.(jpe?g|png|gif|webp|heic|heif)$/i.test(file.originalname);
+        // Algunos móviles mandan el HEIC sin mimetype reconocible, así que basta con que acierte uno de los dos
+        if (extensionValida || /^image\//i.test(file.mimetype)) return cb(null, true);
+        cb(new SubidaInvalida('Ese archivo no es una foto. Sube un jpg, png, webp, gif o heic.'));
     }
 });
 
-const upload = multer({
-    storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
-    fileFilter: (req, file, cb) => {
-        const allowedTypes = /jpeg|jpg|png|gif|webp/;
-        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = allowedTypes.test(file.mimetype);
+async function normalizarFoto(file) {
+    const esHeic = /heic|heif/i.test(file.mimetype) || /\.(heic|heif)$/i.test(file.originalname);
+    const esGif = /gif/i.test(file.mimetype) || /\.gif$/i.test(file.originalname);
 
-        if (mimetype && extname) {
-            return cb(null, true);
-        } else {
-            cb(new Error('Solo se permiten imágenes (jpg, png, gif, webp)'));
+    // El GIF se guarda tal cual: pasarlo por JPEG le quitaría la animación
+    if (esGif) return { buffer: file.buffer, extension: '.gif' };
+
+    let origen = file.buffer;
+    if (esHeic) {
+        try {
+            origen = await heicConvert({ buffer: file.buffer, format: 'JPEG', quality: 0.92 });
+        } catch (err) {
+            throw new SubidaInvalida('No se pudo leer esa foto HEIC. Prueba a exportarla como JPG desde el móvil.');
         }
     }
-});
+
+    try {
+        const buffer = await sharp(origen)
+            .rotate()
+            .resize({ width: 2200, height: 2200, fit: 'inside', withoutEnlargement: true })
+            .jpeg({ quality: 82, mozjpeg: true })
+            .toBuffer();
+        return { buffer, extension: '.jpg' };
+    } catch (err) {
+        throw new SubidaInvalida('Esa imagen está dañada o en un formato que no se puede abrir.');
+    }
+}
 
 // Base de datos
 const db = new sqlite3.Database('./historia.db', (err) => {
@@ -132,32 +156,56 @@ app.post('/api/login', (req, res) => {
     );
 });
 
-app.post('/api/subir', upload.single('foto'), (req, res) => {
+app.post('/api/subir', upload.single('foto'), async (req, res, next) => {
     const { usuario_id, usuario_nombre, titulo, fecha_recuerdo, descripcion } = req.body;
 
     if (!usuario_id || !req.file || !titulo || !fecha_recuerdo) {
         return res.status(400).json({ error: 'Foto, usuario, título y fecha requeridos' });
     }
 
-    const fotoUrl = `/uploads/${req.file.filename}`;
+    try {
+        const { buffer, extension } = await normalizarFoto(req.file);
+        const nombre = `${Date.now()}-${Math.random().toString(36).slice(2, 11)}${extension}`;
+        await fs.promises.writeFile(path.join('uploads', nombre), buffer);
 
-    db.run(
-        'INSERT INTO historias (usuario_id, usuario_nombre, foto_url, titulo, fecha_recuerdo, descripcion) VALUES (?, ?, ?, ?, ?, ?)',
-        [usuario_id, usuario_nombre, fotoUrl, titulo, fecha_recuerdo, descripcion || ''],
-        function(err) {
-            if (err) {
-                return res.status(500).json({ error: 'Error guardando la foto' });
+        const fotoUrl = `/uploads/${nombre}`;
+
+        db.run(
+            'INSERT INTO historias (usuario_id, usuario_nombre, foto_url, titulo, fecha_recuerdo, descripcion) VALUES (?, ?, ?, ?, ?, ?)',
+            [usuario_id, usuario_nombre, fotoUrl, titulo, fecha_recuerdo, descripcion || ''],
+            function(err) {
+                if (err) {
+                    return res.status(500).json({ error: 'Error guardando la foto' });
+                }
+
+                res.json({
+                    success: true,
+                    id: this.lastID,
+                    foto_url: fotoUrl,
+                    titulo: titulo,
+                    descripcion: descripcion || ''
+                });
             }
+        );
+    } catch (err) {
+        next(err);
+    }
+});
 
-            res.json({
-                success: true,
-                id: this.lastID,
-                foto_url: fotoUrl,
-                titulo: titulo,
-                descripcion: descripcion || ''
-            });
-        }
-    );
+// Sin esto, cualquier rechazo de multer acaba en el handler por defecto de Express y sale como un 500 sin explicación
+app.use('/api/subir', (err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        return err.code === 'LIMIT_FILE_SIZE'
+            ? res.status(413).json({ error: 'La foto pesa más de 25 MB. Prueba con una más ligera.' })
+            : res.status(400).json({ error: `No se pudo leer el archivo (${err.code}).` });
+    }
+
+    if (err instanceof SubidaInvalida) {
+        return res.status(err.status).json({ error: err.message });
+    }
+
+    console.error('Error inesperado subiendo foto:', err);
+    res.status(500).json({ error: 'Error guardando la foto' });
 });
 
 app.get('/api/historia', (req, res) => {

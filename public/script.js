@@ -379,11 +379,9 @@ function subirFoto(event) {
             method: 'POST',
             body: formData
         })
-        .then(res => {
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            return res.json();
-        })
-        .then(data => {
+        .then(async res => {
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || `No se pudo guardar la foto (HTTP ${res.status})`);
             submitBtn.textContent = `Guardando (${index + 1}/${fotos.length})...`;
             if (!data.success) throw new Error(data.error || 'Error al subir');
             return data;
