@@ -7,6 +7,11 @@ const cors = require('cors');
 const sharp = require('sharp');
 const heicConvert = require('heic-convert');
 
+// El plan gratuito de Render da 512 MB: sin caché ni hilos de sobra, libvips
+// ocupa bastante menos mientras procesa
+sharp.cache(false);
+sharp.concurrency(1);
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 

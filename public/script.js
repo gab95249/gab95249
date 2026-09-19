@@ -440,9 +440,35 @@ function subirFoto(event) {
     const envios = esCarta ? [fotos[0] || null] : fotos;
 
     submitBtn.disabled = true;
-    submitBtn.textContent = esCarta ? 'Guardando carta...' : `Guardando (0/${envios.length})...`;
+    submitBtn.textContent = 'Preparando...';
 
-    const uploadPromises = envios.map((foto, index) => {
+    // De una en una: subir varias a la vez satura la subida del móvil y la
+    // memoria del servidor, y deja el botón sin poder decir por dónde va
+    enviarEnFila(envios, { esCarta, titulo, fechaRecuerdo, descripcion, submitBtn })
+        .then(results => {
+            showSuccess(uploadSuccess, esCarta ? 'Carta guardada 💌' : `${results.length} foto(s) guardada(s) con éxito`);
+            uploadForm.reset();
+            setTimeout(() => {
+                toggleUploadForm();
+                cargarMomentos();
+                submitBtn.disabled = false;
+                submitBtn.textContent = esCarta ? 'Guardar Carta' : 'Guardar Momento';
+            }, 1000);
+        })
+        .catch(err => {
+            console.error('Upload error:', err);
+            showError(uploadError, err.message || 'Error al guardar');
+            submitBtn.disabled = false;
+            submitBtn.textContent = esCarta ? 'Guardar Carta' : 'Guardar Momento';
+        });
+}
+
+async function enviarEnFila(envios, { esCarta, titulo, fechaRecuerdo, descripcion, submitBtn }) {
+    const guardados = [];
+
+    for (let i = 0; i < envios.length; i++) {
+        const foto = envios[i] ? await reducirImagen(envios[i]) : null;
+
         const formData = new FormData();
         if (foto) formData.append('foto', foto);
         formData.append('tipo', esCarta ? 'carta' : 'foto');
@@ -452,36 +478,66 @@ function subirFoto(event) {
         formData.append('fecha_recuerdo', fechaRecuerdo);
         formData.append('descripcion', descripcion);
 
-        return fetch('/api/subir', {
-            method: 'POST',
-            body: formData
-        })
-        .then(async res => {
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(data.error || `No se pudo guardar (HTTP ${res.status})`);
-            if (!esCarta) submitBtn.textContent = `Guardando (${index + 1}/${envios.length})...`;
-            if (!data.success) throw new Error(data.error || 'Error al subir');
-            return data;
-        });
-    });
+        const etiqueta = esCarta ? 'Guardando carta' : `Guardando ${i + 1}/${envios.length}`;
+        submitBtn.textContent = etiqueta + '...';
 
-    Promise.all(uploadPromises)
-    .then(results => {
-        showSuccess(uploadSuccess, esCarta ? 'Carta guardada 💌' : `${results.length} foto(s) guardada(s) con éxito`);
-        uploadForm.reset();
-        setTimeout(() => {
-            toggleUploadForm();
-            cargarMomentos();
-            submitBtn.disabled = false;
-            submitBtn.textContent = esCarta ? 'Guardar Carta' : 'Guardar Momento';
-        }, 1000);
-    })
-    .catch(err => {
-        console.error('Upload error:', err);
-        showError(uploadError, err.message || 'Error al guardar');
-        submitBtn.disabled = false;
-        submitBtn.textContent = esCarta ? 'Guardar Carta' : 'Guardar Momento';
+        guardados.push(await enviarMomento(formData, avance => {
+            submitBtn.textContent = `${etiqueta} · ${Math.round(avance * 100)}%`;
+        }));
+    }
+
+    return guardados;
+}
+
+// XHR en vez de fetch: es la única forma de saber cuánto lleva subido
+function enviarMomento(formData, alProgresar) {
+    return new Promise((resolve, reject) => {
+        const peticion = new XMLHttpRequest();
+        peticion.open('POST', '/api/subir');
+        peticion.timeout = 120000;
+
+        peticion.upload.onprogress = evento => {
+            if (evento.lengthComputable) alProgresar(evento.loaded / evento.total);
+        };
+
+        peticion.onload = () => {
+            let datos = {};
+            try { datos = JSON.parse(peticion.responseText); } catch (_) {}
+
+            if (peticion.status >= 200 && peticion.status < 300 && datos.success) return resolve(datos);
+            reject(new Error(datos.error || `No se pudo guardar (HTTP ${peticion.status})`));
+        };
+
+        peticion.onerror = () => reject(new Error('Se cortó la conexión mientras subía. Revisa la red e inténtalo otra vez.'));
+        peticion.ontimeout = () => reject(new Error('La subida tardó demasiado. Prueba de una en una o con mejor cobertura.'));
+
+        peticion.send(formData);
     });
+}
+
+// Una foto de móvil pesa 10 MB; enviarla entera por datos es lo que dejaba
+// el botón colgado en "Guardando". Se reduce aquí antes de salir.
+async function reducirImagen(file) {
+    // El navegador no sabe pintar un HEIC: ese va entero y lo convierte el servidor
+    if (!/^image\/(jpeg|png|webp)$/i.test(file.type) || file.size < 600 * 1024) return file;
+
+    try {
+        const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+        const escala = Math.min(1, 1800 / Math.max(bitmap.width, bitmap.height));
+        const lienzo = document.createElement('canvas');
+        lienzo.width = Math.round(bitmap.width * escala);
+        lienzo.height = Math.round(bitmap.height * escala);
+        lienzo.getContext('2d').drawImage(bitmap, 0, 0, lienzo.width, lienzo.height);
+        bitmap.close();
+
+        const blob = await new Promise(listo => lienzo.toBlob(listo, 'image/jpeg', 0.85));
+        if (!blob || blob.size >= file.size) return file;
+
+        return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+    } catch (err) {
+        console.warn('No se pudo reducir la imagen, se sube el original:', err);
+        return file;
+    }
 }
 
 // ==================== TOUCH/SWIPE ====================
