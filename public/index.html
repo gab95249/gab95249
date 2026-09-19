@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Caveat:wght@400;600&display=swap">
-    <link rel="stylesheet" href="styles.css?v=4">
+    <link rel="stylesheet" href="styles.css?v=5">
 </head>
 <body>
     <!-- Pantalla Splash (Corazón) -->
@@ -80,7 +80,7 @@
                     <button type="button" class="tipo-tab" data-tipo="carta" onclick="cambiarTipo('carta')">✉️ Carta</button>
                 </div>
 
-                <form id="upload-form" onsubmit="subirFoto(event)">
+                <form id="upload-form" onsubmit="subirFoto(event)" novalidate>
                     <div class="form-group">
                         <label for="foto" id="foto-label">Fotos</label>
                         <input type="file" id="foto" name="foto" accept="image/*,.heic,.heif" multiple required>
@@ -113,6 +113,6 @@
         </div>
     </div>
 
-    <script src="script.js?v=3"></script>
+    <script src="script.js?v=5"></script>
 </body>
 </html>

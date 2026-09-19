@@ -14,7 +14,15 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public'));
+// El navegador debe revalidar el código en cada visita: servir un script.js
+// viejo junto a un index.html nuevo deja la página a medias
+app.use(express.static('public', {
+    etag: true,
+    maxAge: 0,
+    setHeaders: (res, ruta) => {
+        if (/\.(html|js|css)$/i.test(ruta)) res.setHeader('Cache-Control', 'no-cache');
+    }
+}));
 app.use('/uploads', express.static('uploads'));
 
 // Crear carpeta de uploads si no existe

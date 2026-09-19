@@ -473,6 +473,7 @@ function subirFoto(event) {
             toggleUploadForm();
             cargarMomentos();
             submitBtn.disabled = false;
+            submitBtn.textContent = esCarta ? 'Guardar Carta' : 'Guardar Momento';
         }, 1000);
     })
     .catch(err => {
