@@ -5,6 +5,7 @@ let momentosAgrupados = []; // Agrupados por fecha
 let momentosAgrupados_full = []; // Copia completa sin filtrar
 let miniCarrouselIndex = {}; // Índice de mini-carrusel por fecha
 let selectedYear = null; // Año seleccionado para filtrar
+let tipoActual = 'foto'; // Qué se está creando en el formulario: 'foto' o 'carta'
 
 // Constantes
 const maxClicks = 5;
@@ -185,17 +186,20 @@ function agruparMomentosPorFecha() {
     momentos.forEach(momento => {
         const fechaRecuerdo = momento.fecha_recuerdo || momento.fecha;
         const titulo = momento.titulo || 'Nuestro Momento';
-        const key = `${fechaRecuerdo}-${titulo}`;
+        const tipo = momento.tipo === 'carta' ? 'carta' : 'foto';
+        // El tipo entra en la clave: una carta nunca se agrupa con las fotos de ese día
+        const key = `${tipo}-${fechaRecuerdo}-${titulo}`;
 
         if (!grupos[key]) {
             grupos[key] = {
                 fecha: fechaRecuerdo,
                 titulo: titulo,
-                descripcion: momento.descripcion || 'Un momento especial compartido',
+                tipo: tipo,
+                descripcion: momento.descripcion || (tipo === 'carta' ? '' : 'Un momento especial compartido'),
                 fotos: []
             };
         }
-        grupos[key].fotos.push(momento);
+        if (momento.foto_url) grupos[key].fotos.push(momento);
     });
 
     momentosAgrupados_full = Object.values(grupos);
@@ -242,46 +246,81 @@ function renderCarousel() {
 
     momentosAgrupados.forEach((grupo, index) => {
         const card = document.createElement('div');
-        card.className = 'momento-card';
+        card.dataset.index = index;
 
-        const fechaFormato = formatearFecha(grupo.fecha);
-        const titulo = grupo.titulo;
-        const descripcion = grupo.descripcion;
-        const fotoCount = grupo.fotos.length;
-        const fotoActual = miniCarrouselIndex[index] || 0;
-
-        let miniCarrouselHTML = '';
-        if (fotoCount > 1) {
-            miniCarrouselHTML = `
-                <div class="mini-carousel-controls">
-                    <span class="mini-carousel-counter">${fotoActual + 1}/${fotoCount}</span>
-                </div>
-            `;
+        if (grupo.tipo === 'carta') {
+            card.className = 'carta-card';
+            card.innerHTML = plantillaCarta(grupo);
+            card.addEventListener('click', () => card.classList.toggle('abierta'));
+        } else {
+            card.className = 'momento-card';
+            card.innerHTML = plantillaPolaroid(grupo, miniCarrouselIndex[index] || 0);
         }
-
-        card.innerHTML = `
-            <div class="momento-foto-container">
-                <div class="mini-carousel">
-                    <div class="mini-carousel-track" style="transform: translate3d(-${fotoActual * 100}%, 0, 0)">
-                        ${grupo.fotos.map(foto => `
-                            <img src="${foto.foto_url}" alt="${titulo}" class="momento-foto" draggable="false">
-                        `).join('')}
-                    </div>
-                </div>
-                ${miniCarrouselHTML}
-            </div>
-            <div class="momento-header">
-                <div class="momento-titulo">${titulo}</div>
-                <div class="momento-fecha">${fechaFormato}</div>
-            </div>
-            <div class="momento-decoracion">🌻 ❤️ 🌻</div>
-            <div class="momento-descripcion">"${descripcion}"</div>
-        `;
 
         momentosCarousel.appendChild(card);
     });
 
     updateCarouselIndicator();
+}
+
+function plantillaPolaroid(grupo, fotoActual) {
+    const titulo = escaparHtml(grupo.titulo);
+    const total = grupo.fotos.length;
+
+    const contador = total > 1
+        ? `<div class="mini-carousel-controls"><span class="mini-carousel-counter">${fotoActual + 1}/${total}</span></div>`
+        : '';
+
+    return `
+        <div class="momento-foto-container">
+            <div class="mini-carousel">
+                <div class="mini-carousel-track" style="transform: translate3d(-${fotoActual * 100}%, 0, 0)">
+                    ${grupo.fotos.map(foto => `
+                        <img src="${escaparHtml(foto.foto_url)}" alt="${titulo}" class="momento-foto" draggable="false">
+                    `).join('')}
+                </div>
+            </div>
+            ${contador}
+        </div>
+        <div class="momento-header">
+            <div class="momento-titulo">${titulo}</div>
+            <div class="momento-fecha">${formatearFecha(grupo.fecha)}</div>
+        </div>
+        <div class="momento-decoracion">🌻 ❤️ 🌻</div>
+        <div class="momento-descripcion">"${escaparHtml(grupo.descripcion)}"</div>
+    `;
+}
+
+function plantillaCarta(grupo) {
+    const titulo = escaparHtml(grupo.titulo);
+    const fecha = formatearFecha(grupo.fecha);
+    const foto = grupo.fotos[0];
+
+    return `
+        <div class="sobre">
+            <div class="sobre-cuerpo">
+                <div class="sobre-membrete">
+                    <div class="sobre-titulo">${titulo}</div>
+                    <div class="sobre-fecha">${fecha}</div>
+                </div>
+            </div>
+            <div class="sobre-solapa"></div>
+            <div class="sobre-lacre">❤</div>
+            <div class="sobre-pista">Toca el lacre</div>
+        </div>
+        <div class="carta-hoja">
+            <div class="carta-hoja-interior">
+                ${foto ? `<img src="${escaparHtml(foto.foto_url)}" alt="${titulo}" class="carta-foto">` : ''}
+                ${grupo.descripcion ? `<p class="carta-texto">${escaparHtml(grupo.descripcion)}</p>` : ''}
+                <div class="carta-firma">${fecha}</div>
+            </div>
+        </div>
+    `;
+}
+
+function escaparHtml(texto) {
+    const escapes = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    return String(texto ?? '').replace(/[&<>"']/g, caracter => escapes[caracter]);
 }
 
 function nextMiniCarrusel(index) {
@@ -308,7 +347,7 @@ function updateMiniCarrusel(index) {
     if (!grupo) return;
 
     const fotoActual = miniCarrouselIndex[index] || 0;
-    const card = document.querySelectorAll('.momento-card')[index];
+    const card = momentosCarousel.querySelector(`[data-index="${index}"]`);
     if (!card) return;
 
     const track = card.querySelector('.mini-carousel-track');
@@ -334,8 +373,35 @@ function toggleUploadForm() {
         document.getElementById('titulo').value = '';
         document.getElementById('fecha-recuerdo').value = '';
         document.getElementById('descripcion').value = '';
-        clearMessages();
+        cambiarTipo('foto');
     }
+}
+
+function cambiarTipo(tipo) {
+    tipoActual = tipo === 'carta' ? 'carta' : 'foto';
+    const esCarta = tipoActual === 'carta';
+
+    document.querySelectorAll('.tipo-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tipo === tipoActual);
+    });
+
+    const inputFoto = document.getElementById('foto');
+    inputFoto.required = !esCarta;
+    inputFoto.multiple = !esCarta;
+
+    document.getElementById('upload-title').textContent = esCarta ? 'Escribir una Carta' : 'Agregar un Nuevo Momento';
+    document.getElementById('foto-label').textContent = esCarta ? 'Foto de la carta (opcional)' : 'Fotos';
+    document.getElementById('fecha-label').textContent = esCarta ? 'Fecha de la carta' : 'Fecha del Recuerdo';
+    document.getElementById('descripcion-label').textContent = esCarta ? 'La carta' : 'Recuerdo o Frase';
+
+    const texto = document.getElementById('descripcion');
+    texto.rows = esCarta ? 9 : 4;
+    texto.placeholder = esCarta
+        ? 'Querida...'
+        : 'Cuéntale a nuestro futuro yo qué sentiste en este momento...';
+
+    uploadForm.querySelector('button[type="submit"]').textContent = esCarta ? 'Guardar Carta' : 'Guardar Momento';
+    clearMessages();
 }
 
 function subirFoto(event) {
@@ -348,10 +414,7 @@ function subirFoto(event) {
     const descripcion = document.getElementById('descripcion').value;
     const submitBtn = uploadForm.querySelector('button[type="submit"]');
 
-    if (fotos.length === 0) {
-        showError(uploadError, 'Selecciona al menos una foto');
-        return;
-    }
+    const esCarta = tipoActual === 'carta';
 
     if (!titulo) {
         showError(uploadError, 'Ingresa un título');
@@ -359,16 +422,30 @@ function subirFoto(event) {
     }
 
     if (!fechaRecuerdo) {
-        showError(uploadError, 'Selecciona la fecha del recuerdo');
+        showError(uploadError, esCarta ? 'Selecciona la fecha de la carta' : 'Selecciona la fecha del recuerdo');
         return;
     }
 
-    submitBtn.disabled = true;
-    submitBtn.textContent = `Guardando (0/${fotos.length})...`;
+    if (!esCarta && fotos.length === 0) {
+        showError(uploadError, 'Selecciona al menos una foto');
+        return;
+    }
 
-    const uploadPromises = fotos.map((foto, index) => {
+    if (esCarta && fotos.length === 0 && !descripcion.trim()) {
+        showError(uploadError, 'Escribe la carta o adjunta una foto de ella');
+        return;
+    }
+
+    // La carta es un único envío aunque no lleve foto; las fotos van de una en una
+    const envios = esCarta ? [fotos[0] || null] : fotos;
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = esCarta ? 'Guardando carta...' : `Guardando (0/${envios.length})...`;
+
+    const uploadPromises = envios.map((foto, index) => {
         const formData = new FormData();
-        formData.append('foto', foto);
+        if (foto) formData.append('foto', foto);
+        formData.append('tipo', esCarta ? 'carta' : 'foto');
         formData.append('usuario_id', currentUser);
         formData.append('usuario_nombre', 'Nosotros');
         formData.append('titulo', titulo);
@@ -381,8 +458,8 @@ function subirFoto(event) {
         })
         .then(async res => {
             const data = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(data.error || `No se pudo guardar la foto (HTTP ${res.status})`);
-            submitBtn.textContent = `Guardando (${index + 1}/${fotos.length})...`;
+            if (!res.ok) throw new Error(data.error || `No se pudo guardar (HTTP ${res.status})`);
+            if (!esCarta) submitBtn.textContent = `Guardando (${index + 1}/${envios.length})...`;
             if (!data.success) throw new Error(data.error || 'Error al subir');
             return data;
         });
@@ -390,20 +467,19 @@ function subirFoto(event) {
 
     Promise.all(uploadPromises)
     .then(results => {
-        showSuccess(uploadSuccess, `${results.length} foto(s) guardada(s) con éxito`);
+        showSuccess(uploadSuccess, esCarta ? 'Carta guardada 💌' : `${results.length} foto(s) guardada(s) con éxito`);
         uploadForm.reset();
         setTimeout(() => {
             toggleUploadForm();
             cargarMomentos();
             submitBtn.disabled = false;
-            submitBtn.textContent = 'Guardar Momento';
         }, 1000);
     })
     .catch(err => {
         console.error('Upload error:', err);
-        showError(uploadError, err.message || 'Error al subir las fotos');
+        showError(uploadError, err.message || 'Error al guardar');
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Guardar Momento';
+        submitBtn.textContent = esCarta ? 'Guardar Carta' : 'Guardar Momento';
     });
 }
 
@@ -418,9 +494,9 @@ function handleMiniCarrouselTouchStart(event) {
     const card = contenedor.closest('.momento-card');
     if (!track || !card) return;
 
-    const cardIndex = Array.from(document.querySelectorAll('.momento-card')).indexOf(card);
+    const cardIndex = Number(card.dataset.index);
     const grupo = momentosAgrupados[cardIndex];
-    if (!grupo) return;
+    if (!grupo || grupo.fotos.length < 2) return;
 
     const touch = event.changedTouches[0];
     arrastre = {

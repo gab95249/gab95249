@@ -108,6 +108,9 @@ db.serialize(() => {
         db.run('ALTER TABLE historias ADD COLUMN fecha_recuerdo DATE', (err) => {
             if (!err) console.log('Columna fecha_recuerdo agregada a historias');
         });
+        db.run("ALTER TABLE historias ADD COLUMN tipo TEXT NOT NULL DEFAULT 'foto'", (err) => {
+            if (!err) console.log('Columna tipo agregada a historias');
+        });
     });
 
     // Insertar usuarios de ejemplo si no existen
@@ -158,21 +161,33 @@ app.post('/api/login', (req, res) => {
 
 app.post('/api/subir', upload.single('foto'), async (req, res, next) => {
     const { usuario_id, usuario_nombre, titulo, fecha_recuerdo, descripcion } = req.body;
+    const tipo = req.body.tipo === 'carta' ? 'carta' : 'foto';
 
-    if (!usuario_id || !req.file || !titulo || !fecha_recuerdo) {
-        return res.status(400).json({ error: 'Foto, usuario, título y fecha requeridos' });
+    if (!usuario_id || !titulo || !fecha_recuerdo) {
+        return res.status(400).json({ error: 'Usuario, título y fecha requeridos' });
+    }
+
+    // Una carta puede ser solo texto; una foto sin imagen no es nada
+    if (tipo === 'foto' && !req.file) {
+        return res.status(400).json({ error: 'Falta la foto' });
+    }
+
+    if (tipo === 'carta' && !req.file && !(descripcion || '').trim()) {
+        return res.status(400).json({ error: 'Escribe la carta o adjunta una foto de ella' });
     }
 
     try {
-        const { buffer, extension } = await normalizarFoto(req.file);
-        const nombre = `${Date.now()}-${Math.random().toString(36).slice(2, 11)}${extension}`;
-        await fs.promises.writeFile(path.join('uploads', nombre), buffer);
-
-        const fotoUrl = `/uploads/${nombre}`;
+        let fotoUrl = '';
+        if (req.file) {
+            const { buffer, extension } = await normalizarFoto(req.file);
+            const nombre = `${Date.now()}-${Math.random().toString(36).slice(2, 11)}${extension}`;
+            await fs.promises.writeFile(path.join('uploads', nombre), buffer);
+            fotoUrl = `/uploads/${nombre}`;
+        }
 
         db.run(
-            'INSERT INTO historias (usuario_id, usuario_nombre, foto_url, titulo, fecha_recuerdo, descripcion) VALUES (?, ?, ?, ?, ?, ?)',
-            [usuario_id, usuario_nombre, fotoUrl, titulo, fecha_recuerdo, descripcion || ''],
+            'INSERT INTO historias (usuario_id, usuario_nombre, foto_url, titulo, fecha_recuerdo, descripcion, tipo) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [usuario_id, usuario_nombre, fotoUrl, titulo, fecha_recuerdo, descripcion || '', tipo],
             function(err) {
                 if (err) {
                     return res.status(500).json({ error: 'Error guardando la foto' });
@@ -210,7 +225,7 @@ app.use('/api/subir', (err, req, res, next) => {
 
 app.get('/api/historia', (req, res) => {
     db.all(
-        'SELECT id, usuario_id, usuario_nombre, foto_url, titulo, descripcion, fecha_recuerdo, fecha FROM historias ORDER BY fecha_recuerdo ASC',
+        'SELECT id, usuario_id, usuario_nombre, foto_url, titulo, descripcion, fecha_recuerdo, fecha, tipo FROM historias ORDER BY fecha_recuerdo ASC',
         [],
         (err, rows) => {
             if (err) {
@@ -226,7 +241,7 @@ app.get('/api/mi-historia/:usuario_id', (req, res) => {
     const { usuario_id } = req.params;
 
     db.all(
-        'SELECT id, usuario_id, usuario_nombre, foto_url, titulo, descripcion, fecha_recuerdo, fecha FROM historias WHERE usuario_id = ? ORDER BY fecha_recuerdo ASC',
+        'SELECT id, usuario_id, usuario_nombre, foto_url, titulo, descripcion, fecha_recuerdo, fecha, tipo FROM historias WHERE usuario_id = ? ORDER BY fecha_recuerdo ASC',
         [usuario_id],
         (err, rows) => {
             if (err) {

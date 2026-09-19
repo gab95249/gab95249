@@ -7,7 +7,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Nuestro Espacio</title>
-    <link rel="stylesheet" href="styles.css?v=3">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Caveat:wght@400;600&display=swap">
+    <link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
     <!-- Pantalla Splash (Corazón) -->
@@ -70,10 +73,16 @@
             <div class="upload-form-backdrop" onclick="toggleUploadForm()"></div>
             <div class="upload-form-content">
                 <button class="close-upload" onclick="toggleUploadForm()">✕</button>
-                <h2>Agregar un Nuevo Momento</h2>
+                <h2 id="upload-title">Agregar un Nuevo Momento</h2>
+
+                <div class="tipo-tabs">
+                    <button type="button" class="tipo-tab active" data-tipo="foto" onclick="cambiarTipo('foto')">📷 Foto</button>
+                    <button type="button" class="tipo-tab" data-tipo="carta" onclick="cambiarTipo('carta')">✉️ Carta</button>
+                </div>
+
                 <form id="upload-form" onsubmit="subirFoto(event)">
                     <div class="form-group">
-                        <label for="foto">Fotos</label>
+                        <label for="foto" id="foto-label">Fotos</label>
                         <input type="file" id="foto" name="foto" accept="image/*,.heic,.heif" multiple required>
                     </div>
 
@@ -83,12 +92,12 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="fecha-recuerdo">Fecha del Recuerdo</label>
+                        <label for="fecha-recuerdo" id="fecha-label">Fecha del Recuerdo</label>
                         <input type="date" id="fecha-recuerdo" name="fecha-recuerdo" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="descripcion">Recuerdo o Frase</label>
+                        <label for="descripcion" id="descripcion-label">Recuerdo o Frase</label>
                         <textarea id="descripcion" name="descripcion" placeholder="Cuéntale a nuestro futuro yo qué sentiste en este momento..." rows="4"></textarea>
                     </div>
 

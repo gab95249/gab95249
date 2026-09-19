@@ -656,6 +656,230 @@ body::after {
     justify-content: center;
 }
 
+/* ==================== CARTAS ==================== */
+.carta-card {
+    width: 300px;
+    max-width: 100%;
+    flex: none;
+    cursor: pointer;
+    animation: cardSlideIn 0.5s ease both;
+    -webkit-tap-highlight-color: transparent;
+    /* Al abrirse reserva sitio arriba para que la solapa no invada la tarjeta anterior */
+    transition: padding-top 0.8s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.carta-card.abierta {
+    padding-top: 108px;
+}
+
+.sobre {
+    position: relative;
+    height: 202px;
+    perspective: 1000px;
+    /* Sombra marcada: sobre el campo de girasoles el crema se funde con el fondo */
+    filter: drop-shadow(0 16px 26px rgba(0, 0, 0, 0.55));
+}
+
+.sobre-cuerpo {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(158deg, #e7d7b2 0%, #d5c297 52%, #bfa97e 100%);
+    border: 1px solid rgba(104, 81, 45, 0.55);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+/* El pico de papel del fondo del sobre */
+.sobre-cuerpo::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 68%;
+    background: linear-gradient(172deg, rgba(150, 122, 70, 0.26), rgba(150, 122, 70, 0.04));
+    clip-path: polygon(0 100%, 50% 0, 100% 100%);
+}
+
+/* Manchas de papel envejecido */
+.sobre-cuerpo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 12% 84%, rgba(150, 118, 66, 0.2), transparent 42%),
+        radial-gradient(circle at 88% 16%, rgba(150, 118, 66, 0.16), transparent 38%);
+    pointer-events: none;
+}
+
+.sobre-membrete {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 30px;
+    text-align: center;
+    z-index: 2;
+}
+
+.sobre-titulo {
+    font-family: 'Great Vibes', cursive;
+    font-size: 27px;
+    color: #8a5a20;
+    line-height: 1.15;
+}
+
+.sobre-fecha {
+    font-family: 'Caveat', cursive;
+    font-size: 15px;
+    color: #6b543a;
+}
+
+.sobre-solapa {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 58%;
+    background: linear-gradient(172deg, #f2e6c9 0%, #dccca6 72%, #cdbb94 100%);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    transform-origin: top center;
+    transition: transform 0.9s cubic-bezier(0.55, -0.2, 0.35, 1.15);
+    filter: drop-shadow(0 2px 2px rgba(90, 70, 35, 0.22));
+    z-index: 4;
+}
+
+.carta-card.abierta .sobre-solapa {
+    transform: rotateX(-166deg);
+}
+
+.sobre-lacre {
+    position: absolute;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 21px;
+    color: rgba(255, 219, 209, 0.82);
+    background: radial-gradient(circle at 34% 28%, #c8402f 0%, #8e2318 58%, #5f1410 100%);
+    border-radius: 47% 53% 50% 50% / 52% 47% 53% 48%;
+    box-shadow:
+        0 3px 9px rgba(0, 0, 0, 0.45),
+        inset 0 2px 6px rgba(255, 255, 255, 0.25),
+        inset 0 -4px 7px rgba(0, 0, 0, 0.35);
+    z-index: 6;
+    transition: transform 0.6s cubic-bezier(0.5, -0.4, 0.4, 1), opacity 0.5s ease 0.15s;
+}
+
+.carta-card.abierta .sobre-lacre {
+    transform: translate(-50%, 58px) rotate(-38deg) scale(0.6);
+    opacity: 0;
+}
+
+.sobre-pista {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 8px;
+    text-align: center;
+    font-family: 'Caveat', cursive;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    color: #7a6446;
+    z-index: 5;
+    animation: pistaLatido 2.4s ease-in-out infinite;
+}
+
+.carta-card.abierta .sobre-pista {
+    opacity: 0;
+    animation: none;
+    transition: opacity 0.3s ease;
+}
+
+@keyframes pistaLatido {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.85; }
+}
+
+.carta-hoja {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition:
+        max-height 0.85s cubic-bezier(0.22, 0.61, 0.36, 1),
+        opacity 0.5s ease 0.25s,
+        margin-top 0.85s ease;
+}
+
+.carta-card.abierta .carta-hoja {
+    max-height: 2400px;
+    opacity: 1;
+    margin-top: 12px;
+}
+
+.carta-hoja-interior {
+    background: linear-gradient(170deg, #fdf6e3 0%, #f6ecd4 60%, #eee0c2 100%);
+    border: 1px solid rgba(124, 99, 60, 0.3);
+    border-radius: 2px;
+    padding: 22px 20px 18px 20px;
+    box-shadow: 0 14px 26px rgba(0, 0, 0, 0.3);
+}
+
+.carta-foto {
+    width: 100%;
+    display: block;
+    border-radius: 2px;
+    margin-bottom: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.carta-texto {
+    margin: 0;
+    font-family: 'Caveat', cursive;
+    font-size: 19px;
+    line-height: 1.5;
+    color: #43372a;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    text-align: left;
+}
+
+.carta-firma {
+    margin-top: 14px;
+    text-align: right;
+    font-family: 'Caveat', cursive;
+    font-size: 14px;
+    color: #8a7357;
+}
+
+.tipo-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.tipo-tab {
+    flex: 1;
+    padding: 11px;
+    border: 2px solid #e8d5ab;
+    background: #fdf8ee;
+    color: #8a6a35;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.tipo-tab.active {
+    background: #d97706;
+    border-color: #d97706;
+    color: #ffffff;
+}
+
 .carousel-indicator {
     text-align: center;
     margin: 2px 0 22px 0;
