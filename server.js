@@ -318,9 +318,16 @@ app.delete('/api/eliminar/:id', (req, res) => {
     });
 });
 
-app.listen(PORT, () => {
-    console.log(`🚀 Servidor en http://localhost:${PORT}`);
+// Escuchar en 0.0.0.0 explícitamente: es lo primero que pide Render, y sin
+// ello su proxy puede no encontrar el servicio y responder 502
+const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Servidor escuchando en el puerto ${PORT}`);
 });
+
+// Por debajo de los márgenes del proxy de Render, este cierra conexiones que
+// aquel aún da por vivas y aparecen 502 sueltos durante las subidas
+server.keepAliveTimeout = 120000;
+server.headersTimeout = 125000;
 
 process.on('SIGINT', () => {
     db.close();
