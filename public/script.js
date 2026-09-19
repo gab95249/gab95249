@@ -518,9 +518,11 @@ function enviarMomento(formData, alProgresar) {
 // Una foto de móvil pesa 10 MB; enviarla entera por datos es lo que dejaba
 // el botón colgado en "Guardando". Se reduce aquí antes de salir.
 async function reducirImagen(file) {
-    // El navegador no sabe pintar un HEIC: ese va entero y lo convierte el servidor
-    if (!/^image\/(jpeg|png|webp)$/i.test(file.type) || file.size < 600 * 1024) return file;
+    const esImagen = /^image\//i.test(file.type) || /\.(jpe?g|png|webp|heic|heif)$/i.test(file.name);
+    if (!esImagen || file.size < 600 * 1024) return file;
 
+    // Se intenta incluso con HEIC: muchos Android ya lo saben abrir, y así la
+    // foto sale del móvil convertida sin pasar por el decodificador del servidor
     try {
         const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
         const escala = Math.min(1, 1800 / Math.max(bitmap.width, bitmap.height));

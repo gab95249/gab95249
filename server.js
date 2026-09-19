@@ -56,31 +56,54 @@ const upload = multer({
     }
 });
 
+function comprimir(buffer) {
+    return sharp(buffer)
+        .rotate()
+        .resize({ width: 2200, height: 2200, fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 82, mozjpeg: true })
+        .toBuffer();
+}
+
+// libheif va en WebAssembly y con 12 MP tarda una eternidad en una máquina
+// pequeña. Con el tope, la petición responde en vez de quedarse colgada.
+function decodificarHeic(buffer) {
+    let reloj;
+    const tope = new Promise((_, fallar) => {
+        reloj = setTimeout(
+            () => fallar(new SubidaInvalida('Esa foto HEIC tardó demasiado en abrirse. Expórtala como JPG desde el móvil.')),
+            20000
+        );
+    });
+
+    const decodificado = heicConvert({ buffer, format: 'JPEG', quality: 0.92 })
+        .catch(() => {
+            throw new SubidaInvalida('No se pudo leer esa foto HEIC. Prueba a exportarla como JPG desde el móvil.');
+        });
+
+    return Promise.race([decodificado, tope]).finally(() => clearTimeout(reloj));
+}
+
 async function normalizarFoto(file) {
-    const esHeic = /heic|heif/i.test(file.mimetype) || /\.(heic|heif)$/i.test(file.originalname);
     const esGif = /gif/i.test(file.mimetype) || /\.gif$/i.test(file.originalname);
 
     // El GIF se guarda tal cual: pasarlo por JPEG le quitaría la animación
     if (esGif) return { buffer: file.buffer, extension: '.gif' };
 
-    let origen = file.buffer;
-    if (esHeic) {
-        try {
-            origen = await heicConvert({ buffer: file.buffer, format: 'JPEG', quality: 0.92 });
-        } catch (err) {
-            throw new SubidaInvalida('No se pudo leer esa foto HEIC. Prueba a exportarla como JPG desde el móvil.');
-        }
+    // libvips abre el HEIF de forma nativa y en un segundo, así que se prueba
+    // siempre primero, sea cual sea el formato
+    try {
+        return { buffer: await comprimir(file.buffer), extension: '.jpg' };
+    } catch (err) {
+        const pareceHeic = /heic|heif/i.test(file.mimetype) || /\.(heic|heif)$/i.test(file.originalname);
+        if (!pareceHeic) throw new SubidaInvalida('Esa imagen está dañada o en un formato que no se puede abrir.');
     }
 
+    const jpeg = await decodificarHeic(file.buffer);
+
     try {
-        const buffer = await sharp(origen)
-            .rotate()
-            .resize({ width: 2200, height: 2200, fit: 'inside', withoutEnlargement: true })
-            .jpeg({ quality: 82, mozjpeg: true })
-            .toBuffer();
-        return { buffer, extension: '.jpg' };
+        return { buffer: await comprimir(jpeg), extension: '.jpg' };
     } catch (err) {
-        throw new SubidaInvalida('Esa imagen está dañada o en un formato que no se puede abrir.');
+        throw new SubidaInvalida('No se pudo leer esa foto HEIC. Prueba a exportarla como JPG desde el móvil.');
     }
 }
 
