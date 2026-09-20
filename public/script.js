@@ -1,5 +1,4 @@
 // Estado global
-let currentUser = 1; // Usuario anónimo
 let momentos = [];
 let momentosAgrupados = []; // Agrupados por fecha
 let momentosAgrupados_full = []; // Copia completa sin filtrar
@@ -136,22 +135,50 @@ function updateUserBadge() {
     userBadge.textContent = '💕 Nuestro Espacio';
 }
 
+// ==================== SUPABASE ====================
+// Los recuerdos viven en Supabase, no en el servidor que sirve esta página:
+// así sobreviven a cada despliegue y a que el alojamiento se duerma.
+const db = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+
+function urlPublicaDeFoto(ruta) {
+    if (!ruta) return '';
+    // Las filas antiguas guardaban una ruta local; esas ya vienen listas
+    if (/^https?:\/\//i.test(ruta) || ruta.startsWith('/uploads/')) return ruta;
+    return db.storage.from(SUPABASE_CONFIG.bucket).getPublicUrl(ruta).data.publicUrl;
+}
+
+async function subirFotoAlAlmacen(file) {
+    const extension = (file.name.match(/\.[^.]+$/) || ['.jpg'])[0].toLowerCase();
+    const nombre = `${Date.now()}-${Math.random().toString(36).slice(2, 11)}${extension}`;
+
+    const { error } = await db.storage
+        .from(SUPABASE_CONFIG.bucket)
+        .upload(nombre, file, { contentType: file.type || 'image/jpeg', upsert: false });
+
+    if (error) throw new Error(`No se pudo guardar la foto: ${error.message}`);
+    return nombre;
+}
+
 function cargarMomentos() {
-    fetch('/api/historia')
-        .then(res => res.json())
-        .then(data => {
-            momentos = data.momentos || [];
-            // El recuerdo más nuevo va primero
-            momentos.sort((a, b) => {
-                const fechaA = new Date(a.fecha_recuerdo || a.fecha);
-                const fechaB = new Date(b.fecha_recuerdo || b.fecha);
-                return fechaB - fechaA;
-            });
+    db.from(SUPABASE_CONFIG.tabla)
+        .select('*')
+        .order('fecha_recuerdo', { ascending: false })
+        .then(({ data, error }) => {
+            if (error) throw error;
+
+            momentos = (data || []).map(fila => ({
+                ...fila,
+                foto_url: urlPublicaDeFoto(fila.foto_url)
+            }));
+
             agruparMomentosPorFecha();
             mostrarYears();
             renderCarousel();
         })
-        .catch(err => console.error('Error cargando momentos:', err));
+        .catch(err => {
+            console.error('Error cargando momentos:', err);
+            momentosCarousel.innerHTML = `<div class="album-vacio"><p>No se pudieron cargar los recuerdos. Revisa la conexión.</p></div>`;
+        });
 }
 
 // Lee el año desde "YYYY-MM-DD" sin pasar por Date, que interpreta la
@@ -241,7 +268,7 @@ function renderCarousel() {
         const mensaje = momentos.length === 0
             ? 'No hay momentos aún. ¡Agrega el primero! 💕'
             : `No hay momentos de ${selectedYear} 🌻`;
-        momentosCarousel.innerHTML = `<div style="text-align: center; color: #fff; padding: 40px; text-shadow: 0 2px 6px rgba(0,0,0,0.6);"><p>${mensaje}</p></div>`;
+        momentosCarousel.innerHTML = `<div class="album-vacio"><p>${mensaje}</p></div>`;
         momentCounter.textContent = '0 / 0';
         return;
     }
@@ -509,53 +536,33 @@ async function enviarEnFila(envios, { esCarta, titulo, fechaRecuerdo, descripcio
     const guardados = [];
 
     for (let i = 0; i < envios.length; i++) {
+        const etiqueta = esCarta ? 'Guardando carta' : `Guardando ${i + 1}/${envios.length}`;
+
+        submitBtn.textContent = etiqueta + ' · preparando...';
         const foto = envios[i] ? await reducirImagen(envios[i]) : null;
 
-        const formData = new FormData();
-        if (foto) formData.append('foto', foto);
-        formData.append('tipo', esCarta ? 'carta' : 'foto');
-        formData.append('usuario_id', currentUser);
-        formData.append('usuario_nombre', 'Nosotros');
-        formData.append('titulo', titulo);
-        formData.append('fecha_recuerdo', fechaRecuerdo);
-        formData.append('descripcion', descripcion);
+        let rutaFoto = '';
+        if (foto) {
+            submitBtn.textContent = etiqueta + ' · subiendo...';
+            rutaFoto = await subirFotoAlAlmacen(foto);
+        }
 
-        const etiqueta = esCarta ? 'Guardando carta' : `Guardando ${i + 1}/${envios.length}`;
         submitBtn.textContent = etiqueta + '...';
+        const { data, error } = await db.from(SUPABASE_CONFIG.tabla).insert({
+            titulo,
+            descripcion,
+            fecha_recuerdo: fechaRecuerdo,
+            tipo: esCarta ? 'carta' : 'foto',
+            foto_url: rutaFoto
+        }).select().single();
 
-        guardados.push(await enviarMomento(formData, avance => {
-            submitBtn.textContent = `${etiqueta} · ${Math.round(avance * 100)}%`;
-        }));
+        if (error) throw new Error(`No se pudo guardar el recuerdo: ${error.message}`);
+        guardados.push(data);
     }
 
     return guardados;
 }
 
-// XHR en vez de fetch: es la única forma de saber cuánto lleva subido
-function enviarMomento(formData, alProgresar) {
-    return new Promise((resolve, reject) => {
-        const peticion = new XMLHttpRequest();
-        peticion.open('POST', '/api/subir');
-        peticion.timeout = 120000;
-
-        peticion.upload.onprogress = evento => {
-            if (evento.lengthComputable) alProgresar(evento.loaded / evento.total);
-        };
-
-        peticion.onload = () => {
-            let datos = {};
-            try { datos = JSON.parse(peticion.responseText); } catch (_) {}
-
-            if (peticion.status >= 200 && peticion.status < 300 && datos.success) return resolve(datos);
-            reject(new Error(datos.error || `No se pudo guardar (HTTP ${peticion.status})`));
-        };
-
-        peticion.onerror = () => reject(new Error('Se cortó la conexión mientras subía. Revisa la red e inténtalo otra vez.'));
-        peticion.ontimeout = () => reject(new Error('La subida tardó demasiado. Prueba de una en una o con mejor cobertura.'));
-
-        peticion.send(formData);
-    });
-}
 
 // Una foto de móvil pesa 10 MB; enviarla entera por datos es lo que dejaba
 // el botón colgado en "Guardando". Se reduce aquí antes de salir.
