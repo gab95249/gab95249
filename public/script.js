@@ -519,27 +519,85 @@ function enviarMomento(formData, alProgresar) {
 // el botón colgado en "Guardando". Se reduce aquí antes de salir.
 async function reducirImagen(file) {
     const esImagen = /^image\//i.test(file.type) || /\.(jpe?g|png|webp|heic|heif)$/i.test(file.name);
-    if (!esImagen || file.size < 600 * 1024) return file;
+    if (!esImagen || (file.size < 600 * 1024 && !esHeic(file))) return file;
 
-    // Se intenta incluso con HEIC: muchos Android ya lo saben abrir, y así la
-    // foto sale del móvil convertida sin pasar por el decodificador del servidor
     try {
-        const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
-        const escala = Math.min(1, 1800 / Math.max(bitmap.width, bitmap.height));
+        const fuente = await abrirImagen(file);
+        const escala = Math.min(1, 1800 / Math.max(fuente.width, fuente.height));
         const lienzo = document.createElement('canvas');
-        lienzo.width = Math.round(bitmap.width * escala);
-        lienzo.height = Math.round(bitmap.height * escala);
-        lienzo.getContext('2d').drawImage(bitmap, 0, 0, lienzo.width, lienzo.height);
-        bitmap.close();
+        lienzo.width = Math.round(fuente.width * escala);
+        lienzo.height = Math.round(fuente.height * escala);
+        lienzo.getContext('2d').drawImage(fuente, 0, 0, lienzo.width, lienzo.height);
+        if (fuente.close) fuente.close();
 
         const blob = await new Promise(listo => lienzo.toBlob(listo, 'image/jpeg', 0.85));
-        if (!blob || blob.size >= file.size) return file;
+        if (!blob) return file;
+
+        // Un HEIC se convierte aunque no adelgace: al servidor pequeño le cuesta
+        // demasiado decodificar 12 MP y ahí es donde se atascaban las subidas
+        if (blob.size >= file.size && !esHeic(file)) return file;
 
         return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
     } catch (err) {
-        console.warn('No se pudo reducir la imagen, se sube el original:', err);
+        console.warn('No se pudo convertir la imagen, se sube el original:', err);
         return file;
     }
+}
+
+function esHeic(file) {
+    return /heic|heif/i.test(file.type) || /\.(heic|heif)$/i.test(file.name);
+}
+
+async function abrirImagen(file) {
+    try {
+        return await createImageBitmap(file, { imageOrientation: 'from-image' });
+    } catch (err) {
+        // Chrome en Android no pinta HEIC, así que se tira de libheif
+        if (!esHeic(file)) throw err;
+        return decodificarHeicAqui(file);
+    }
+}
+
+// El decodificador pesa 1,9 MB, así que solo se carga si aparece un HEIC
+let libheifCargando = null;
+
+function cargarLibheif() {
+    if (!libheifCargando) {
+        libheifCargando = new Promise((listo, fallar) => {
+            const etiqueta = document.createElement('script');
+            etiqueta.src = 'vendor/libheif.js';
+            etiqueta.onload = listo;
+            etiqueta.onerror = () => fallar(new Error('No se pudo cargar el decodificador HEIC'));
+            document.head.appendChild(etiqueta);
+        // window.libheif es una fábrica: hay que invocarla para tener el módulo
+        }).then(() => window.libheif());
+    }
+
+    return libheifCargando;
+}
+
+async function decodificarHeicAqui(file) {
+    const libheif = await cargarLibheif();
+    const imagenes = new libheif.HeifDecoder().decode(new Uint8Array(await file.arrayBuffer()));
+    if (!imagenes || !imagenes.length) throw new Error('El HEIC no contiene ninguna imagen');
+
+    const imagen = imagenes[0];
+    const ancho = imagen.get_width();
+    const alto = imagen.get_height();
+
+    const lienzo = document.createElement('canvas');
+    lienzo.width = ancho;
+    lienzo.height = alto;
+
+    const contexto = lienzo.getContext('2d');
+    const pixeles = contexto.createImageData(ancho, alto);
+
+    await new Promise((listo, fallar) => {
+        imagen.display(pixeles, resultado => resultado ? listo() : fallar(new Error('libheif no pudo pintar el HEIC')));
+    });
+
+    contexto.putImageData(pixeles, 0, 0);
+    return lienzo;
 }
 
 // ==================== TOUCH/SWIPE ====================
