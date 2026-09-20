@@ -68,6 +68,13 @@
             <button class="action-btn" onclick="toggleUploadForm()">➕ Agregar Momento</button>
         </div>
 
+        <!-- La carta abierta, flotando sobre el álbum -->
+        <div id="carta-modal" class="carta-modal hidden">
+            <div class="carta-modal-fondo" onclick="cerrarCarta()"></div>
+            <button class="carta-modal-x" onclick="cerrarCarta()" aria-label="Cerrar la carta">✕</button>
+            <div class="carta-modal-hoja" id="carta-modal-hoja"></div>
+        </div>
+
         <!-- Formulario de carga (oculto inicialmente) -->
         <div id="upload-form-container" class="upload-form-container hidden">
             <div class="upload-form-backdrop" onclick="toggleUploadForm()"></div>

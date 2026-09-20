@@ -6,6 +6,7 @@ let momentosAgrupados_full = []; // Copia completa sin filtrar
 let miniCarrouselIndex = {}; // Índice de mini-carrusel por fecha
 let selectedYear = null; // Año seleccionado para filtrar
 let tipoActual = 'foto'; // Qué se está creando en el formulario: 'foto' o 'carta'
+let cartaAbierta = null; // El sobre que está abierto ahora mismo
 
 // Constantes
 const maxClicks = 5;
@@ -31,6 +32,7 @@ const momentCounter = document.getElementById('moment-counter');
 const uploadFormContainer = document.getElementById('upload-form-container');
 const uploadError = document.getElementById('upload-error');
 const uploadSuccess = document.getElementById('upload-success');
+const cartaModal = document.getElementById('carta-modal');
 
 // Mini-carousel swipe support (delegated)
 document.addEventListener('touchstart', handleMiniCarrouselTouchStart, false);
@@ -251,7 +253,7 @@ function renderCarousel() {
         if (grupo.tipo === 'carta') {
             card.className = 'carta-card';
             card.innerHTML = plantillaCarta(grupo);
-            card.addEventListener('click', () => card.classList.toggle('abierta'));
+            card.addEventListener('click', () => abrirCarta(index));
         } else {
             card.className = 'momento-card';
             card.innerHTML = plantillaPolaroid(grupo, miniCarrouselIndex[index] || 0);
@@ -308,14 +310,54 @@ function plantillaCarta(grupo) {
             <div class="sobre-lacre">❤</div>
             <div class="sobre-pista">Toca el lacre</div>
         </div>
-        <div class="carta-hoja">
-            <div class="carta-hoja-interior">
-                ${foto ? `<img src="${escaparHtml(foto.foto_url)}" alt="${titulo}" class="carta-foto">` : ''}
-                ${grupo.descripcion ? `<p class="carta-texto">${escaparHtml(grupo.descripcion)}</p>` : ''}
-                <div class="carta-firma">${fecha}</div>
+    `;
+}
+
+function abrirCarta(index) {
+    const grupo = momentosAgrupados[index];
+    const card = momentosCarousel.querySelector(`[data-index="${index}"]`);
+    if (!grupo || !card || card.classList.contains('abierta')) return;
+
+    card.classList.add('abierta');
+    cartaAbierta = card;
+
+    const foto = grupo.fotos[0];
+    const titulo = escaparHtml(grupo.titulo);
+
+    document.getElementById('carta-modal-hoja').innerHTML = `
+        <div class="carta-hoja-interior">
+            <div class="carta-encabezado">
+                <div class="carta-titulo">${titulo}</div>
+                <div class="carta-fecha">${formatearFecha(grupo.fecha)}</div>
             </div>
+            ${foto ? `<img src="${escaparHtml(foto.foto_url)}" alt="${titulo}" class="carta-foto">` : ''}
+            ${grupo.descripcion ? `<p class="carta-texto">${escaparHtml(grupo.descripcion)}</p>` : ''}
+            <button class="btn-cerrar-sobre" onclick="cerrarCarta()">Cerrar el sobre</button>
         </div>
     `;
+
+    document.body.style.overflow = 'hidden';
+
+    // La carta asoma cuando la solapa ya se ha levantado
+    setTimeout(() => {
+        cartaModal.classList.remove('hidden');
+        requestAnimationFrame(() => cartaModal.classList.add('visible'));
+    }, 420);
+}
+
+function cerrarCarta() {
+    cartaModal.classList.remove('visible');
+    document.body.style.overflow = '';
+
+    setTimeout(() => {
+        cartaModal.classList.add('hidden');
+
+        // Y ya sin la carta encima, el sobre se vuelve a cerrar a la vista
+        if (cartaAbierta) {
+            cartaAbierta.classList.remove('abierta');
+            cartaAbierta = null;
+        }
+    }, 400);
 }
 
 function escaparHtml(texto) {
