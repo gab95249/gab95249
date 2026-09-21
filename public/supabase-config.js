@@ -6,8 +6,8 @@
 //
 // Los dos valores salen del panel de Supabase, en Project Settings > API.
 const SUPABASE_CONFIG = {
-    url: 'https://TU-PROYECTO.supabase.co',
-    anonKey: 'TU-CLAVE-ANON',
+    url: 'https://njdbaeuwdxifwljnnulh.supabase.co',
+    anonKey: 'sb_publishable_i2BkZ0vf3AAP0Y9n7NLAXQ_lhL1cL7a',
     tabla: 'recuerdos',
     bucket: 'fotos'
 };
