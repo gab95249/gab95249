@@ -6,6 +6,8 @@ let miniCarrouselIndex = {}; // Índice de mini-carrusel por fecha
 let selectedYear = null; // Año seleccionado para filtrar
 let tipoActual = 'foto'; // Qué se está creando en el formulario: 'foto' o 'carta'
 let cartaAbierta = null; // El sobre que está abierto ahora mismo
+let editandoMomentoId = null; // ID del momento siendo editado
+let editandoMomentoIndex = null; // Índice en momentosAgrupados del momento siendo editado
 
 // Constantes
 const maxClicks = 5;
@@ -280,10 +282,21 @@ function renderCarousel() {
         if (grupo.tipo === 'carta') {
             card.className = 'carta-card';
             card.innerHTML = plantillaCarta(grupo);
-            card.addEventListener('click', () => abrirCarta(index));
+            card.addEventListener('click', (e) => {
+                if (e.shiftKey) {
+                    abrirModalEdicion(index);
+                } else {
+                    abrirCarta(index);
+                }
+            });
         } else {
             card.className = 'momento-card';
             card.innerHTML = plantillaPolaroid(grupo, miniCarrouselIndex[index] || 0);
+            card.addEventListener('click', (e) => {
+                if (e.shiftKey) {
+                    abrirModalEdicion(index);
+                }
+            });
         }
 
         momentosCarousel.appendChild(card);
@@ -301,6 +314,9 @@ function plantillaPolaroid(grupo, fotoActual) {
         : '';
 
     return `
+        <div class="card-actions" onclick="event.stopPropagation()">
+            <button class="btn-delete" onclick="borrarMomento(event)" title="Borrar" aria-label="Borrar recuerdo">🗑️</button>
+        </div>
         <div class="momento-foto-container">
             <div class="mini-carousel">
                 <div class="mini-carousel-track" style="transform: translate3d(-${fotoActual * 100}%, 0, 0)">
@@ -326,6 +342,9 @@ function plantillaCarta(grupo) {
     const foto = grupo.fotos[0];
 
     return `
+        <div class="card-actions" onclick="event.stopPropagation()">
+            <button class="btn-delete" onclick="borrarMomento(event)" title="Borrar" aria-label="Borrar recuerdo">🗑️</button>
+        </div>
         <div class="sobre">
             <div class="sobre-cuerpo">
                 <div class="sobre-membrete">
@@ -443,6 +462,55 @@ function toggleUploadForm() {
         document.getElementById('fecha-recuerdo').value = '';
         document.getElementById('descripcion').value = '';
         cambiarTipo('foto');
+        configurarDragDrop();
+    } else {
+        removerDragDrop();
+    }
+}
+
+function configurarDragDrop() {
+    const uploadContent = document.querySelector('.upload-form-content');
+    const fotoInput = document.getElementById('foto');
+
+    uploadContent.addEventListener('dragover', handleDragOver);
+    uploadContent.addEventListener('dragenter', handleDragEnter);
+    uploadContent.addEventListener('dragleave', handleDragLeave);
+    uploadContent.addEventListener('drop', (e) => handleDrop(e, fotoInput));
+}
+
+function removerDragDrop() {
+    const uploadContent = document.querySelector('.upload-form-content');
+    if (uploadContent) {
+        uploadContent.removeEventListener('dragover', handleDragOver);
+        uploadContent.removeEventListener('dragenter', handleDragEnter);
+        uploadContent.removeEventListener('dragleave', handleDragLeave);
+        uploadContent.removeEventListener('drop', handleDrop);
+    }
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+}
+
+function handleDragEnter(e) {
+    e.preventDefault();
+    document.querySelector('.upload-form-content').classList.add('dragover');
+}
+
+function handleDragLeave(e) {
+    if (e.target === document.querySelector('.upload-form-content')) {
+        document.querySelector('.upload-form-content').classList.remove('dragover');
+    }
+}
+
+function handleDrop(e, fotoInput) {
+    e.preventDefault();
+    document.querySelector('.upload-form-content').classList.remove('dragover');
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+        fotoInput.files = files;
     }
 }
 
@@ -723,6 +791,125 @@ function handleMiniCarrouselTouchEnd() {
     } else {
         updateMiniCarrusel(gesto.cardIndex);
     }
+}
+
+// ==================== EDIT & DELETE ====================
+function abrirModalEdicion(index) {
+    const grupo = momentosAgrupados[index];
+    if (!grupo || !grupo.fotos.length) return;
+
+    editandoMomentoId = grupo.fotos[0].id;
+    editandoMomentoIndex = index;
+
+    document.getElementById('edit-titulo').value = grupo.titulo;
+    document.getElementById('edit-fecha').value = grupo.fecha;
+    document.getElementById('edit-descripcion').value = grupo.descripcion || '';
+    document.getElementById('edit-foto').value = '';
+    document.getElementById('edit-foto-actual').textContent = `Foto actual: ${grupo.fotos[0].foto_url.split('/').pop()}`;
+
+    document.getElementById('edit-modal-container').classList.remove('hidden');
+}
+
+function cerrarModalEdicion() {
+    document.getElementById('edit-modal-container').classList.add('hidden');
+    editandoMomentoId = null;
+    editandoMomentoIndex = null;
+    document.getElementById('edit-form').reset();
+    document.getElementById('edit-error').classList.remove('show');
+    document.getElementById('edit-success').classList.remove('show');
+}
+
+async function guardarEdicion(event) {
+    event.preventDefault();
+
+    const titulo = document.getElementById('edit-titulo').value;
+    const fecha = document.getElementById('edit-fecha').value;
+    const descripcion = document.getElementById('edit-descripcion').value;
+    const fotoFile = document.getElementById('edit-foto').files[0];
+    const submitBtn = document.getElementById('edit-form').querySelector('button[type="submit"]');
+
+    if (!titulo || !fecha) {
+        showError(document.getElementById('edit-error'), 'Título y fecha son requeridos');
+        return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Guardando...';
+
+    try {
+        let rutaFoto = null;
+        const grupo = momentosAgrupados[editandoMomentoIndex];
+
+        if (fotoFile) {
+            submitBtn.textContent = 'Subiendo foto...';
+            const fotoReducida = await reducirImagen(fotoFile);
+            rutaFoto = await subirFotoAlAlmacen(fotoReducida);
+        }
+
+        const updateData = {
+            titulo,
+            fecha_recuerdo: fecha,
+            descripcion
+        };
+
+        if (rutaFoto) {
+            updateData.foto_url = rutaFoto;
+        }
+
+        const { error } = await db
+            .from(SUPABASE_CONFIG.tabla)
+            .update(updateData)
+            .eq('id', editandoMomentoId);
+
+        if (error) throw new Error(`No se pudo guardar: ${error.message}`);
+
+        showSuccess(document.getElementById('edit-success'), 'Recuerdo actualizado correctamente');
+        setTimeout(() => {
+            cerrarModalEdicion();
+            cargarMomentos();
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Guardar Cambios';
+        }, 1000);
+    } catch (err) {
+        console.error('Edit error:', err);
+        showError(document.getElementById('edit-error'), err.message || 'Error al editar');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Guardar Cambios';
+    }
+}
+
+function borrarMomento(event) {
+    event.stopPropagation();
+    const card = event.target.closest('.momento-card, .carta-card');
+    if (!card) return;
+
+    const index = Number(card.dataset.index);
+    const grupo = momentosAgrupados[index];
+    if (!grupo || !grupo.fotos.length) return;
+
+    if (!confirm(`¿Borrar "${grupo.titulo}"?`)) return;
+
+    const idABorrar = grupo.fotos[0].id;
+    const btnDelete = event.target.closest('button');
+    btnDelete.disabled = true;
+    btnDelete.textContent = '⏳';
+
+    (async () => {
+        try {
+            const { error } = await db
+                .from(SUPABASE_CONFIG.tabla)
+                .delete()
+                .eq('id', idABorrar);
+
+            if (error) throw new Error(error.message);
+            cargarMomentos();
+        } catch (err) {
+            console.error('Delete error:', err);
+            alert('Error al borrar: ' + err.message);
+            btnDelete.disabled = false;
+            btnDelete.textContent = '🗑️';
+        }
+    })();
 }
 
 // ==================== LLUVIA DE CORAZONES ====================

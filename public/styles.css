@@ -1111,6 +1111,120 @@ body::after {
     }
 }
 
+/* Edit Modal */
+.edit-modal-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+    animation: fadeIn 0.3s ease;
+}
+
+.edit-modal-container.hidden {
+    display: none !important;
+}
+
+.edit-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.edit-modal-content {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    position: relative;
+    z-index: 1001;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.edit-modal-content h2 {
+    color: #92400e;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+.close-edit {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-edit:hover {
+    color: #333;
+}
+
+/* Card Action Buttons */
+.card-actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 10;
+}
+
+.momento-card:hover .card-actions,
+.carta-card:hover .card-actions {
+    opacity: 1;
+}
+
+.btn-delete {
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.btn-delete:hover {
+    background: rgba(220, 38, 38, 1);
+}
+
+/* Drag and Drop Styles */
+.upload-form-content.dragover {
+    background-color: #fef3c7;
+    border: 2px dashed #f59e0b;
+}
+
+input[type="file"] {
+    cursor: pointer;
+}
+
+input[type="file"]:hover {
+    opacity: 0.7;
+}
+
 .hidden {
     display: none !important;
 }

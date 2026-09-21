@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Caveat:wght@400;600&display=swap">
-    <link rel="stylesheet" href="styles.css?v=6">
+    <link rel="stylesheet" href="styles.css?v=7">
 </head>
 <body>
     <!-- Pantalla Splash (Corazón) -->
@@ -75,6 +75,46 @@
             <div class="carta-modal-hoja" id="carta-modal-hoja"></div>
         </div>
 
+        <!-- Modal de edición (oculto inicialmente) -->
+        <div id="edit-modal-container" class="edit-modal-container hidden">
+            <div class="edit-modal-backdrop" onclick="cerrarModalEdicion()"></div>
+            <div class="edit-modal-content">
+                <button class="close-edit" onclick="cerrarModalEdicion()">✕</button>
+                <h2>Editar Recuerdo</h2>
+
+                <form id="edit-form" onsubmit="guardarEdicion(event)" novalidate>
+                    <div class="form-group">
+                        <label for="edit-titulo">Título</label>
+                        <input type="text" id="edit-titulo" name="titulo" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-fecha">Fecha</label>
+                        <input type="date" id="edit-fecha" name="fecha" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-descripcion">Descripción</label>
+                        <textarea id="edit-descripcion" name="descripcion" rows="4"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-foto">Foto (opcional)</label>
+                        <input type="file" id="edit-foto" name="foto" accept="image/*,.heic,.heif">
+                        <small id="edit-foto-actual" style="display: block; color: #666; margin-top: 8px;"></small>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                        <button type="button" class="btn btn-secondary" onclick="cerrarModalEdicion()">Cancelar</button>
+                    </div>
+
+                    <div id="edit-error" class="error-message"></div>
+                    <div id="edit-success" class="success-message"></div>
+                </form>
+            </div>
+        </div>
+
         <!-- Formulario de carga (oculto inicialmente) -->
         <div id="upload-form-container" class="upload-form-container hidden">
             <div class="upload-form-backdrop" onclick="toggleUploadForm()"></div>
@@ -122,6 +162,6 @@
 
     <script src="vendor/supabase.js"></script>
     <script src="supabase-config.js"></script>
-    <script src="script.js?v=6"></script>
+    <script src="script.js?v=7"></script>
 </body>
 </html>
