@@ -1,0 +1,17 @@
+[build]
+  publish = "public"
+  command = "echo 'Static site'"
+
+[dev]
+  publish = "public"
+  functions = "functions"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[headers]
+  [[headers.values]]
+    key = "Cache-Control"
+    value = "no-cache, no-store, must-revalidate"
